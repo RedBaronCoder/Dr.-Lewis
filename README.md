@@ -10,3 +10,4 @@ This program is designed for use by students and teachers in general chemistry i
 It will include common covalently bonded compounds such as methane and water, as well as some slightly lesser known ones such as phthalic acid. Exceptions to the Octet Rule are involved for existing molecules.
 
 If you have questions or suggestions feel free to contact me through either email address I provided. 
+
