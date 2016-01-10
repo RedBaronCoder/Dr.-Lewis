@@ -1,0 +1,38 @@
+class ColorButton extends Button {
+
+  boolean showColor; //if true, color is shown
+
+  color buttonColor;
+
+  //Constructor initializes all variables as before, +color as well
+  //c: color that the button uses for its function
+  ColorButton(float tempX, float tempY, float tempW, float tempH, color c) {
+    super(tempX, tempY, tempW, tempH);
+    buttonColor = c;
+    showColor = false;
+  }
+
+  /** showColor returns the value selected for showColor.
+   *
+   *@return returns the value selected for showColor.
+   */
+  boolean showColor() {
+    return showColor;
+  }
+
+  void drawButton() {
+    fill(buttonColor);
+    rect(x, y, w, h);
+  }
+
+  /** checkButton here asks which color button is true based on the location of the click and makes it true
+   *
+   */
+  void checkButton() {
+    if (abs(mouseX - (x + 0.5 * w)) < (.5 * w ) && abs(mouseY - (y + 0.5 * h)) < (.5 * h) ) {
+      if (mouseY < height/20) {
+        showColor = true;
+      }
+    }
+  }
+}
