@@ -1,0 +1,59 @@
+//serves as the superclass for all buttons in the code
+class Button {
+
+  //Is the boolean on or off?
+  boolean on;
+
+  color buttonColor = color(0);
+
+  //Button location and size
+  float x;
+  float y;
+  float w;
+  float h;
+    
+  String buttonText = "";
+
+  //Constructor initializes all variables.
+  //tempX: top left corner of button x-coordinate
+  //tempY: top left corner of button y-coordinate
+  //tempW: horizontal length of button
+  //tempH: vertical length of button
+  Button(float tempX, float tempY, float tempW, float tempH) {
+    x = tempX;
+    y = tempY;
+    w = tempW;
+    h = tempH;
+    on = false;
+  }
+
+  Button(float tempX, float tempY, float tempW, float tempH, String tempLabel) {
+    x = tempX;
+    y = tempY;
+    w = tempW;
+    h = tempH;
+    on = false;
+    buttonText = tempLabel;
+  }
+
+  /** drawButton method doesn't return anything, but which draws a button
+   *
+   */
+  void drawButton() {
+    textSize(22);
+    fill(buttonColor);
+    rect(x, y, w, h);
+    for (int k = 0; k < g.elementButtons.length; k++) {
+      if (g.lastClicked[k] == false) {
+        fill(242, 132, 22);
+        textAlign(CENTER, CENTER);
+        text(buttonText, x + .5 * w, y + .5 * h);
+      }
+      if (g.lastClicked[k] == true) {
+        fill(48, 225, 240);
+        textAlign(CENTER, CENTER);
+        text(buttonText, x + .5 * w, y + .5 * h);
+      }
+    }
+  }
+}
