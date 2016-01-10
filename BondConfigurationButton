@@ -1,0 +1,116 @@
+class BondConfigurationButton extends Button {
+
+  int timesConfigured;
+
+  boolean configure; //if true, bond configuration goes into effect
+  BondConfigurationButton(float tempX, float tempY, float tempW, float tempH, String tempLabel) {
+    super(tempX, tempY, tempW, tempH, tempLabel);
+    configure = false;
+    timesConfigured = 0; //the bonds are not reconfigured initially
+  }
+
+  //does an element generally form 0 bonds?
+  boolean zeroBondTendency(int x) {
+    if ((x == 1) || (x == 9) || (x == 14) || (x == 18) || (x == 21) || (x == 23)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //does an element generally form one bond?
+  boolean oneBondTendency(int x) {
+    if ((x == 0) || (x == 2) || (x == 8) || (x == 13) || (x == 17) || (x == 20) || (x == 22)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //does an element generally form two bonds?
+  boolean twoBondTendency(int x) {
+    if ((x == 3) || (x == 7) || (x == 12) || (x == 16) || (x == 19)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //does an element generally form three bonds?
+  boolean threeBondTendency(int x) {
+    if ((x == 4) || (x == 6) || (x == 11) || (x == 15)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //does an element generally form four bonds?
+  boolean fourBondTendency(int x) {
+    if ((x == 5) || (x == 10)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /** checkButton checks to see when the bondConfigurationButton should shuffle the possible bonds of the current network of atoms
+   *
+   */
+  void checkButton() {
+    if (g.mol.moleculeElementIndex() >= 1) {
+      if ((mouseX > 795 * width/1280) && (mouseX < 1025 * width/1280) && (mouseY > 889 * height/1024) && (mouseY < 919 * height/1024)) {
+        configure = true;
+      }      
+      if (configure == true) {
+        timesConfigured = timesConfigured + 1;
+        reconfigureBonds(g.mol.numberOfBonds(g.mol.numberOfAtoms()));
+      }
+      g.buttonsClicked = g.buttonsClicked + 1;
+    }
+  }
+
+  /** reconfigureBonds runs through the permutations of molecules that can be formed by the collection of atoms currently displayed on the screen.
+   *
+   */
+  void reconfigureBonds(int numberOfBonds) { 
+    for (int i = 0; i < 8; i++) { //this network of loops sets all bonds to false initially
+      for (int j = 0; j < 8; j++) {
+        g.grid.bondsh[i][j].bondUsage = false;
+        g.grid.bondsv[i][j].bondUsage = false;
+        for (int b = 1; b < 4; b++) {
+          g.grid.bondsh[i][j].visifyHorizontalBond(i, j, b, false);
+          g.grid.bondsv[i][j].visifyVerticalBond(i, j, b, false);
+        }
+      }
+    }
+
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (g.grid.cells[i][j].occupiedWithWhat != -1) {
+          g.grid.cells[i][j].isOccupied = false;
+          g.grid.cells[i][j].occupiedWithWhat = -1;
+          g.grid.cells[i][j].isHighlighted = true;
+          for (int b = 1; b < 4; b++) {
+            g.grid.bondsh[i][j].visifyHorizontalBond(i, j, b, false);
+            g.grid.bondsv[i][j].visifyVerticalBond(i, j, b, false);
+          }
+          g.grid.bondsh[i][j].visifyHorizontalBond(i, j, 0, true);
+          g.grid.bondsv[i][j].visifyVerticalBond(i, j, 0, true);
+        }
+      }
+    }
+    for (int k = 0; k < 24; k++) {
+      g.lastClicked[k] = true;
+    }
+    g.mol.searchMoleculeDictionary();
+    g.pTable.drawAnnotatedPeriodicTable();
+  }
+
+  /** updateBondNumbers creates the array of bond numbers that keep track of which type of bond should be in each used bond slot.
+   *
+   */
+  void updateBondNumbers() {
+    reconfigureBonds(g.mol.numberOfBonds(g.mol.numberOfAtoms()));
+  }
+}
