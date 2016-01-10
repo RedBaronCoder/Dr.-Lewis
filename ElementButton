@@ -1,0 +1,85 @@
+class ElementButton extends Button {
+
+  color elementSymbolColoration;
+
+  int atomCounter;
+  int[] maxValence = {
+    1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 5, 6, 7, 8, 6, 7, 8, 7, 8
+  }; 
+
+  //maximum number of Valence Electrons for each atom
+  //constructs where a string of text is also a parameter
+  //tempText: the string of text that the button uses for its function
+  String[]elementSymbols = {
+    "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Si", "P", "S", "Cl", "Ar", "As", "Se", "Br", "Kr", "Te", "I", "Xe", "At", "Rn"
+  };
+
+  Element element;
+
+  ElementButton(float tempX, float tempY, float tempW, float tempH, Element tempElement, color tempElementSymbolColoration) 
+  {
+    super(tempX, tempY, tempW, tempH);   
+    buttonText = tempElement.getSymbol(); //retraces steps to find the element symbol currently being stored in element
+    element = tempElement;
+    elementSymbolColoration = tempElementSymbolColoration;
+  }
+
+  /** changeColorationColor changes the element button symbol color when it is selected.
+   *
+   */
+  void changeColoration(color c) {
+    elementSymbolColoration = c;
+  }
+
+  /** checkButton checks if an Element Button was clicked and causes it to draw the desired text if so.
+   *
+   */
+  void checkButton() {
+    if ((mouseY > height/20) && (mouseY < (height/20 + height/20))) {//determines if button should activate the color function or the element function, print element name      
+      if (abs(mouseX - (x + 0.5 * w)) < (.5 * w) && abs(mouseY - (y + .5 * h)) < (.5 * h)) { //cells do not glow without this line, which refers to the a box for the elementButton
+        g.buttonsClicked = g.buttonsClicked + 1;
+        g.mol.displayNeedChargeMessage = false;
+        fill(0);
+        for (int k = 0; k < g.elementButtons.length; k++) {
+          g.lastClicked[k] = false;
+          g.elementButtons[k].changeColoration(color(242, 132, 22));
+          for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+              if ((mouseX > k * width/15) && (mouseX < (k + 1) * width/15)) { 
+                g.lastClicked[k] = true; //sets only the single appropriate lastClicked boolean equal to true                 
+                g.checkToDrawElements(k);
+                g.grid.makeGlow = !g.grid.makeGlow;
+                g.checkToDrawGrid();
+                g.mol.error = false;
+                g.mol.displayErrorMessage = false;
+                g.mol.needCharge = false;
+                g.mol.displayNeedChargeMessage = false;
+              } //closes constraints for identifying a particular element button
+            } //closes for loop indexing j for the rows in the grid
+          } //closes for loop indexing i for the columns in the grid
+        } //closes for loop indexing k for the members of the array of element Buttons
+      } //closes condition that mouse is clicked somewhere in some particular element Button
+    } //closes condition that mouse is clicking somewhere in the element buttons
+  } //closes checkButton
+
+  /** drawButton method doesn't return anything, but which draws a button
+   *
+   */
+  void drawButton() {
+    textSize(22);
+    fill(buttonColor);
+    rect(x, y, w, h);
+    for (int k = 0; k < g.elementButtons.length; k++) {
+      fill(elementSymbolColoration);
+      textAlign(CENTER, CENTER);
+      text(buttonText, x + .5 * w, y + .5 * h);
+    }
+  }
+
+  color getElementSymbolColoration() {
+    return elementSymbolColoration;
+  }
+}
+
+//for sake of example:
+//ElementButton example = new ElementButton(30,40,50,50, new Element("Hydrogen", "H", 1), color(255));
