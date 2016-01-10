@@ -1,0 +1,104 @@
+class Cell {
+
+  boolean isHighlighted = false;//cells are not initially glowing
+  boolean isOccupied = false; //all cells are initially empty
+  boolean isLocked = false;
+
+  color highlightCellColor = color(255, 255, 0);
+
+  float cellColor; //color of cell
+  float cellSizeX; //horizontal length of a cell
+  float cellSizeY; //vertical length of a cell
+  float cellX; //x-coordinate of leftmost point of cell
+  float cellY; //y-coordinate of uppermost point of cell
+
+  int occupiedWithWhat = -1; //the ith symbol in the elementButton array is counted; with the cell being empty at first, we set it to -1.
+
+  Cell ce;
+
+  Cell(float tempCellX, float tempCellY, float tempCellSizeX, float tempCellSizeY, float tempCellColor, boolean tempIsHighlighted, boolean tempIsOccupied, int tempOccupiedWithWhat) {
+    cellX = tempCellX;
+    cellY = tempCellY;
+    cellSizeX = tempCellSizeX;
+    cellSizeY = tempCellSizeY;
+    cellColor = tempCellColor;
+    isHighlighted = tempIsHighlighted;
+    isOccupied = tempIsOccupied;
+    occupiedWithWhat = tempOccupiedWithWhat;
+  }
+
+  /** cellGlow commands a cell to glow based on the background color.
+   *
+   */
+  void cellGlow() {
+    fill(highlightCellColor);   
+    rect(cellX, cellY, cellSizeX, cellSizeY);
+  }
+
+  /** ceaseGlow identifies when a cell should stop glowing.
+   *
+   */
+  void ceaseGlow() {
+    fill(g.backgroundColor);
+    rect(cellX, cellY, cellSizeX, cellSizeY);
+  }
+
+  /** fourBondTendency checks a cell's occupant to see if it generally forms four bonds
+   *
+   */
+  boolean fourBondTendency(int i, int j) {
+    if ((g.grid.cells[i][j].occupiedWithWhat == 5) || (g.grid.cells[i][j].occupiedWithWhat == 10)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  float getCellX() {
+    return cellX;
+  }
+
+  float getCellY() {
+    return cellY;
+  }
+
+  float getCellSizeX() {
+    return cellSizeX;
+  }
+
+  float getCellSizeY() {
+    return cellSizeY;
+  }
+
+  /** oneBondTendency checks a cell's occupant to see if it generally forms one bond
+   *
+   */
+  boolean oneBondTendency(int i, int j) {
+    if ((g.grid.cells[i][j].occupiedWithWhat == 0) || (g.grid.cells[i][j].occupiedWithWhat == 2) || (g.grid.cells[i][j].occupiedWithWhat == 8) || (g.grid.cells[i][j].occupiedWithWhat == 13) || (g.grid.cells[i][j].occupiedWithWhat == 17) || (g.grid.cells[i][j].occupiedWithWhat == 20) || (g.grid.cells[i][j].occupiedWithWhat == 22)) {
+      return true;
+    } else
+      return false;
+  }
+
+  /** threeBondTendency checks a cell's occupant to see if it generally forms three bonds
+   *
+   */
+  boolean threeBondTendency(int i, int j) {
+    if ((g.grid.cells[i][j].occupiedWithWhat == 4) || (g.grid.cells[i][j].occupiedWithWhat == 6) || (g.grid.cells[i][j].occupiedWithWhat == 11) || (g.grid.cells[i][j].occupiedWithWhat == 15)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /** twoBondTendency checks a cell's occupant to see if it generally forms two bonds
+   *
+   */
+  boolean twoBondTendency(int i, int j) {
+    if ((g.grid.cells[i][j].occupiedWithWhat == 3) || (g.grid.cells[i][j].occupiedWithWhat == 7) || (g.grid.cells[i][j].occupiedWithWhat == 12) || (g.grid.cells[i][j].occupiedWithWhat == 16) || (g.grid.cells[i][j].occupiedWithWhat == 19)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+}
