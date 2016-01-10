@@ -1,0 +1,116 @@
+class Element {
+
+  int eToDoubleBond;
+  int eToSingleBond;
+  int eToTripleBond;
+  int valenceElectrons; 
+
+  String id;
+  String symbol;
+
+  Element(String tempId, String tempSymbol, int tempValenceElectrons, int tempEToSingleBond, int tempEToDoubleBond, int tempEToTripleBond) {
+    id = tempId;
+    symbol = tempSymbol;
+    valenceElectrons = tempValenceElectrons;
+    eToSingleBond = tempEToSingleBond;
+    eToDoubleBond = tempEToDoubleBond;
+    eToTripleBond = tempEToTripleBond;
+  }
+
+  /** getId returns the value selected for getId.
+   *
+   *@return returns the value selected for getId.
+   */
+  String getId() {
+    return id;
+  }
+
+  /** getSymbol returns the value selected for getSymbol.
+   *
+   *@return returns the value selected for getSymbol.
+   */
+  String getSymbol() {
+    return symbol;
+  }
+
+  /** getValenceElectrons returns the value selected for getValenceElectrons.
+   *
+   *@return returns the value selected for getValenceElectrons.
+   */
+  int getValenceElectrons() {
+    return valenceElectrons;
+  }
+
+  /** getEToSingleBond returns the value selected for getEToSingleBond.
+   *
+   *@return returns the value selected for getEToSingleBond.
+   */
+  int getEToSingleBond() {
+    return eToSingleBond;
+  }
+
+  /** getEToDoubleBond returns the value selected for getEToDoubleBond.
+   *
+   *@return returns the value selected for getEToDoubleBond.
+   */
+  int getEToDoubleBond() {
+    return eToDoubleBond;
+  }
+
+  /** getEToTripleBond returns the value selected for getEToTripleBond.
+   *
+   *@return returns the value selected for getEToTripleBond.
+   */
+  int getEToTripleBond() {
+    return eToTripleBond;
+  }
+
+  /** setId reverts tempId back to Id to be re-used for a different button.
+   *
+   *@String tempId is the temporary identity of the element, as set in the constructor Element.
+   */
+
+  void setId(String tempId) {
+    id = tempId;
+  }
+
+  /** setSymbol reverts tempId back to Id to be re-used for a different button.
+   *
+   *@String tempSymbol is the temporary identity of the element, as set in the constructor Element.
+   */
+  void setSymbol(String tempSymbol) {
+    symbol = tempSymbol;
+  }
+
+  /** setId reverts tempValenceElectrons back to valenceElectrons to be re-used for a different button.
+   *
+   *@String tempValenceElectrons is the temporary identity of the element, as set in the constructor Element.
+   */
+  void setValenceElectrons(int tempValenceElectrons) {
+    valenceElectrons = tempValenceElectrons;
+  }
+
+  /** setEToSingleBond returns the value selected for setEToSingleBond.
+   *
+   *@return returns the value selected for setEToSingleBond.
+   */
+  void setEToSingleBond(int tempEToSingleBond) {
+    eToSingleBond = tempEToSingleBond;
+  }
+
+  /** setEToDoubleBond returns the value selected for setEToDoubleBond.
+   *
+   *@return returns the value selected for setEToDoubleBond.
+   */
+  void setEToDoubleBond(int tempEToDoubleBond) {
+    eToDoubleBond = tempEToDoubleBond;
+  }
+
+  /** setEToTripleBond returns the value selected for setEToTripleBond.
+   *
+   *@return returns the value selected for setEToTripleBond.
+   */
+  void setEToTripleBond(int tempEToTripleBond) {
+    eToTripleBond = tempEToTripleBond;
+  }
+}
