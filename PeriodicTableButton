@@ -1,0 +1,104 @@
+class PeriodicTableButton extends Button {
+
+  boolean showPeriodicTable;
+  boolean[] periodicTableBoxes = new boolean[10];
+
+  float colorOscillator;
+
+  int appear;
+
+  PeriodicTableButton(float tempX, float tempY, float tempW, float tempH, String tempLabel) {
+    super(tempX, tempY, tempW, tempH, tempLabel);
+    showPeriodicTable = false;
+  }
+
+  void checkButton() {
+    showPeriodicTable = !showPeriodicTable;
+    drawGiantPeriodicTable();
+    appear = appear + 1;
+  }
+
+  void drawAnnotatedPeriodicTable() {      
+    if (g.mol.moleculeElementIndex() >= 1) {    
+      image(periodicTable, 460 * width/1280, 600 * height/1024, 450 * width/1280, 250 * height/1024);
+    }
+  }
+
+  void drawPeriodicTableBoxes(int i) {
+    if (showPeriodicTable == false) {
+      colorOscillator = colorOscillator + 6;
+      if (i == 1) {
+        fill(0, 0, 0, colorOscillator % 150);
+        rect(463 * width/1280, 620 * height/1024, 25 * width/1280, 23 * height/1024);
+      } else if (i == 2) {
+        fill(255, 3, 142, colorOscillator % 150);
+        rect(882 * width/1280, 620 * height/1024, 25 * width/1280, 23 * height/1024);
+      } else if (i == 3) {
+        fill(27, 55, 83, colorOscillator % 150);
+        rect(463 * width/1280, 643 * height/1024, 25 * width/1280, 23 * height/1024);
+      } else if (i == 4) {
+        fill(255, 0, 0, colorOscillator % 150);
+        rect(488 * width/1280, 643 * height/1024, 25 * width/1280, 23 * height/1024);
+      } else if (i == 5) {
+        fill(240, 46, 24, colorOscillator % 150);
+        rect(758 * width/1280, 643 * height/1024, 25 * width/1280, 23 * height/1024);
+      } else if (i == 6) {
+        fill(0, 255, 0, colorOscillator % 150);
+        rect(783 * width/1280, 643 * height/1024, 25 * width/1280, 46 * height/1024);
+      } else if (i == 7) {
+        fill(0, 0, 255, colorOscillator % 150);
+        rect(808 * width/1280, 643 * height/1024, 25 * width/1280, 46 * height/1024);
+      } else if (i == 8) {
+        fill(130, 23, 144, colorOscillator % 150);
+        rect(833 * width/1280, 643 * height/1024, 24 * width/1280, 46 * height/1024);
+      } else if (i == 9) {
+        fill(144, 82, 23, colorOscillator % 150);
+        rect(857 * width/1280, 643 * height/1024, 25 * width/1280, 46 * height/1024);
+      } else if (i == 10) {
+        fill(255, 3, 142, colorOscillator % 150);
+        rect(882 * width/1280, 643 * height/1024, 25 * width/1280, 46 * height/1024);
+      }
+    }
+  }
+
+  void drawGiantPeriodicTable() {
+    if (showPeriodicTable == true) {
+      image(periodicTable, width/6, height/6, 2 * width/3, 2 * height/3);
+    }
+  }
+
+  void selectPeriodicTableBoxes() {
+    if (g.bondConfigurationButton.timesConfigured >= 1) {
+      if (g.mol.moleculeContainment(0) == true) {
+        drawPeriodicTableBoxes(1);
+      }
+      if (g.mol.moleculeContainment(1) == true) {
+        drawPeriodicTableBoxes(2);
+      }
+      if (g.mol.moleculeContainment(2) == true) {
+        drawPeriodicTableBoxes(3);
+      }
+      if (g.mol.moleculeContainment(3) == true) {
+        drawPeriodicTableBoxes(4);
+      }
+      if (g.mol.moleculeContainment(4) == true) {
+        drawPeriodicTableBoxes(5);
+      }
+      if ((g.mol.moleculeContainment(5) == true) || (g.mol.moleculeContainment(10) == true)) {
+        drawPeriodicTableBoxes(6);
+      }
+      if ((g.mol.moleculeContainment(6) == true) || (g.mol.moleculeContainment(11) == true)) {
+        drawPeriodicTableBoxes(7);
+      }
+      if ((g.mol.moleculeContainment(7) == true) || (g.mol.moleculeContainment(12) == true)) {
+        drawPeriodicTableBoxes(8);
+      }
+      if ((g.mol.moleculeContainment(8) == true) || (g.mol.moleculeContainment(13) == true)) {
+        drawPeriodicTableBoxes(9);
+      }
+      if ((g.mol.moleculeContainment(9) == true) || (g.mol.moleculeContainment(14) == true)) {
+        drawPeriodicTableBoxes(10);
+      }
+    }
+  }
+}
