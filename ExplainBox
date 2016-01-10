@@ -1,0 +1,65 @@
+class ExplainBox {
+
+  boolean explaining;
+
+  float eBoxX;
+  float eBoxY;
+  float eBoxSizeX;
+  float eBoxSizeY;
+
+  color eBoxColor;
+
+  ExplainBox(float tempEBoxX, float tempEBoxY, float tempEBoxSizeX, float tempEBoxSizeY, color tempEBoxColor, boolean tempExplaining) {
+    eBoxX = tempEBoxX;
+    eBoxY = tempEBoxY;
+    eBoxSizeX = tempEBoxSizeX;
+    eBoxSizeY = tempEBoxSizeY;
+    eBoxColor = tempEBoxColor;
+    explaining = tempExplaining;
+  }
+
+  /** this method allows identification of which explanation boxes are relevant for the given molecule
+   *
+   */
+  void chooseExplainBoxes() {
+    if ((g.mol.moleculeContainment(9) == true) || (g.mol.moleculeContainment(14) == true)) {
+      g.displayExplainBoxes[0] = true;
+    }
+    if ((g.mol.moleculeContainment(0) == true) || (g.mol.moleculeContainment(8) == true) || (g.mol.moleculeContainment(13) == true)) {
+      g.displayExplainBoxes[1] = true;
+    }
+    if ((g.mol.moleculeContainment(7) == true) || (g.mol.moleculeContainment(12) == true)) {
+      g.displayExplainBoxes[2] = true;
+    }
+    if ((g.mol.moleculeContainment(6) == true) || (g.mol.moleculeContainment(11) == true)) {
+      g.displayExplainBoxes[3] = true;
+    }
+    if ((g.mol.moleculeContainment(5) == true) || (g.mol.moleculeContainment(10) == true)) {
+      g.displayExplainBoxes[4] = true;
+    }
+    if (g.mol.moleculeContainment(0) == true) {
+      g.displayExplainBoxes[5] = true;
+    }
+    if (g.mol.moleculeContainment(1) == true) {
+      g.displayExplainBoxes[6] = true;
+    }
+    if (g.mol.moleculeContainment(3) == true) {
+      g.displayExplainBoxes[7] = true;
+    }
+    if (g.mol.moleculeContainment(4) == true) {
+      g.displayExplainBoxes[8] = true;
+    }
+    if ((g.mol.resonate == true) && (g.bondConfigurationButton.timesConfigured == 1)) {
+      g.displayExplainBoxes[9] = true;
+    }
+    if ((g.mol.resonate == true) && (g.bondConfigurationButton.timesConfigured > 1)) {
+      g.displayExplainBoxes[10] = true;
+    }
+    if ((g.currentCharge != 0) && (g.mol.moleculeElementIndex() > 1)) {
+     g.displayExplainBoxes[11] = true; 
+    }
+    if ((g.currentCharge != 0) && (g.mol.moleculeElementIndex() == 1)) {
+     g.displayExplainBoxes[12] = true; 
+    }
+  }
+}
