@@ -1,0 +1,173 @@
+class Bond {
+
+  boolean isVertical; //false for horizontal bonds, true for vertical bonds (set to false as default)
+  boolean bondUsage; //determines whether bond is being used or not
+
+  float bondSizeX;
+  float bondSizeY;
+  float bondX;
+  float bondY;
+  float xWidth = width * 24/25 * 1/8 * 7/8;
+  float yHeight = .9 * (height - height/20 - height/15  - 110) * 1/8 * 7/8;
+
+  int bondType; //(1 = single bond, 2 = double bond, 3 = triple bond)
+
+  Bond (boolean tempIsVertical, float tempBondX, float tempBondY, float tempBondSizeX, float tempBondSizeY, int tempBondType, boolean tempBondUsage) {
+    isVertical = tempIsVertical;
+    bondX = tempBondX;
+    bondY = tempBondY;
+    bondSizeX = tempBondSizeX;
+    bondSizeY = tempBondSizeY;
+    bondType = tempBondType;
+    bondUsage = tempBondUsage;
+    bondType = 0;
+  }
+
+  boolean isVertical() {
+    return isVertical;
+  }
+
+  float bondX () {
+    return bondX;
+  }
+
+  float bondY () {
+    return bondY;
+  }
+
+  float bondSizeX () {
+    return bondSizeX;
+  }
+
+  float bondSizeY () {
+    return bondSizeY;
+  }
+
+  float bondType() {
+    return bondType;
+  }
+
+  float xi(int i) {
+    return width * 24/25 * 1/8 * i + width * 24/25 * 1/8 * 1/16;
+  }
+
+  float yj(int j) {
+    return height/20 + height/15 + .9 * (height - height/20 - height/15 - 110) * 1/8 * j + .9 * (height - height/20 - height/15 - 110) * 1/8 * 1/16;
+  }
+
+  void setIsVertical(boolean tempIsVertical) {
+    isVertical = tempIsVertical;
+  }
+
+  void setBondX(float tempBondX) {
+    bondX = tempBondX;
+  }
+
+  void setBondY(float tempBondY) {
+    bondY = tempBondY;
+  }
+
+  void setBondSizeX(float tempBondSizeX) {
+    bondSizeX = tempBondSizeX;
+  }
+
+  void setBondSizeY(float tempBondSizeY) {
+    bondSizeY = tempBondSizeY;
+  }
+
+  void setBondType(int tempBondType) {
+    bondType = tempBondType;
+  }
+
+  /** drawHorizontalBond orders horizontal bonds to be drawn when they are deemed visible.
+   *
+   */
+  void drawHorizontalBond() {
+    for (int i = 0; i < 7; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (g.grid.bondsh[i][j].bondUsage == true) { 
+          fill(0);
+          if (g.grid.bondsh[i][j].bondType == 1) {           
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight, .24 * xWidth, 1); //fix length of this bond!
+          } else if (g.grid.bondsh[i][j].bondType == 2) {
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight - 2, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight + 2, .24 * xWidth, 1);
+          } else if (g.grid.bondsh[i][j].bondType == 3) {
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight - 4, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight + 4, .24 * xWidth, 1);
+          }
+        } else if (g.grid.bondsh[i][j].bondUsage == false) {
+          if ((g.grid.bondsh[i][j].bondType == 0) && (g.grid.cells[i][j].isOccupied == true) && (g.grid.cells[i + 1][j].isOccupied == true)) {
+            fill(g.backgroundColor);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight - 4, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight + 4, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight - 2, .24 * xWidth, 1);
+            rect(xi(i) + .92 * xWidth, yj(j) + .47 * yHeight + 2, .24 * xWidth, 1);
+          }
+        }
+      }
+    }
+  }
+
+  /** drawVerticalBonds draws vertical bonds when they are deemed visible.
+   *
+   */
+  void drawVerticalBond() {
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 7; j++) {
+        if (g.grid.bondsv[i][j].bondUsage == true) {
+          fill(0);
+          if (g.grid.bondsv[i][j].bondType == 1) {
+            rect(xi(i) + .46 * xWidth, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+          } else if (g.grid.bondsv[i][j].bondType == 2) {
+            rect(xi(i) + .46 * xWidth - 2, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth + 2, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+          } else if (g.grid.bondsv[i][j].bondType == 3) {
+            rect(xi(i) + .46 * xWidth, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth - 4, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth + 4, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+          }
+        } else if (g.grid.bondsv[i][j].bondUsage == false) {
+          if ((g.grid.bondsv[i][j].bondType == 0) && (g.grid.cells[i][j].isOccupied == true) && (g.grid.cells[i][j + 1].isOccupied == true)) {
+            fill(g.backgroundColor);
+            rect(xi(i) + .46 * xWidth, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth - 4, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth + 4, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth - 2, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+            rect(xi(i) + .46 * xWidth + 2, yj(j) + .82 * yHeight, 1, .41 * yHeight);
+          }
+        }
+      }
+    }
+  }
+
+  /** visifyHorizontalBond indicates when horizontal bonds should become visible.
+   *
+   */
+  void visifyHorizontalBond(int i, int j, int l, boolean bondUsage) {
+    for (int k = 1; k < 4; k++) {
+      if (l == k) {
+        if (g.grid.bondsh[i][j].bondUsage == true) {         
+          g.grid.bondsh[i][j].bondType = k;
+          drawHorizontalBond();
+        }
+      }
+    }
+  }
+
+  /** visifyVerticalBond indicates when vertical bonds should become visible.
+   *
+   */
+  void visifyVerticalBond(int i, int j, int l, boolean bondUsage) {  
+    for (int k = 1; k < 4; k++) {
+      if (l == k) {
+        if (g.grid.bondsv[i][j].bondUsage == true) {
+          g.grid.bondsv[i][j].bondType = k;
+          drawVerticalBond();
+        }
+      }
+    }
+  }
+}
