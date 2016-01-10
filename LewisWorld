@@ -1,0 +1,720 @@
+class LewisWorld {
+  //this code generates Lewis Structures for covalently bonded molecules and polyatomic ions based on molecular formulas, instructing users each step of the way so they can draw Lewis Structures comfortably on their own. 
+
+  ArrayList<int[]> molStructure = new ArrayList<int[]>(); //the specific structure for our particular molecule
+
+  boolean[] chargeDisplay = new boolean[8];
+  boolean chargeSelected;
+  boolean displayExplainBoxes[] = new boolean[13];
+  boolean[] lastClicked = new boolean[24];
+  boolean displayInstructions;
+
+  color backgroundColor; //color of background as we change it
+  color[] buttonColors = new color[31];
+  color elementSymbolColor[] = new color[24];
+
+  //the two float variables below are used as dummy variables for when elements are drawn in multiple places; substitute coordinates of elements and dots for new locations; e stands for "element"
+  float eXLocation;
+  float eYLocation;
+  float uH = .9 * (height - height/20 - height/15 - 110);
+  float uW = width * 24/25;
+
+  int buttonsClicked = 0;
+  int chargesSelected; //how many times has a charge button been clicked?
+  int eSingleBond;
+  int eDoubleBond;
+  int eTripleBond;
+  int[] netCharge = new int[8];
+  int currentCharge; //what is the charge of what is on the screen?
+
+  String[] charge = new String[8];
+  String[] elementSymbols = {
+    "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Si", "P", "S", "Cl", "Ar"
+  };
+
+  Bond[][] bonds; 
+  BondConfigurationButton bondConfigurationButton;
+  Cell[][] cells; //cells specifically used for glowing and so forth
+  ChargeButton[] chargeButtons;
+  ClearButton clear;
+  ColorButton[] colorButtons;
+  Element el1;
+  ElementButton[] elementButtons;
+  ExplainBox[] eBoxes; //creates the explanation boxes, or eBoxes for short
+  Grid grid; 
+  Molecule mol = new Molecule(molStructure); //mol stands for "universal molecule"
+  PeriodicTableButton pTable;
+  ShowExplanationButton explainToMe;
+
+  /** allElementsOff turns off all element buttons when the screen is cleared
+   *
+   */
+  void allElementsOff() {
+    for (int i = 0; i < elementButtons.length; i++) {
+      lastClicked[i] = false;
+    }
+  }
+
+  /** checkToDrawColors fills background the color of a button when the color button is made true
+   *
+   */
+  void checkToDrawColors() {
+    for (int i = 0; i < colorButtons.length; i++) { 
+      if (colorButtons[i].showColor() ) {
+        backgroundColor = colorButtons[i].buttonColor;
+        background(backgroundColor);
+      }
+    }
+  }
+
+  /** checkToDrawElements draws element symbols if an element button was made true
+   *
+   */
+  void checkToDrawElements(int k) {
+    textSize(28);
+    fill(backgroundColor);
+    fill(0);
+    text(elementButtons[k].buttonText, uW/2, uH/2);
+  }
+
+  /** checkToDrawGrid identifies when the grid of cells should be drawn.
+   *
+   */
+  void checkToDrawGrid() {
+    if (g.grid.makeGlow == true) {
+      g.grid.checkToGlow(); //checkToGlow is called here so that cells glow when a new element is drawn
+    }
+  }
+
+  /** drawBondConfigurationButton draws the bond configuration button.
+   *
+   */
+  void drawBondConfigurationButton() {
+    bondConfigurationButton.drawButton();
+  }
+
+  /** drawChargeButtons draws the charge buttons at the appropriate locations so the right charge is printed when a certain location along the bar of buttons is clicked.
+   *
+   */
+  void drawChargeButtons() {
+    eXLocation = uW; //adding these two lines fixed the problem with the cell glowing!!!
+    eYLocation = uH;
+    fill(242, 132, 22);
+    for (int i = 0; i < charge.length; i++) {
+      chargeButtons[i].drawButton();
+    }
+  }
+
+  /** drawClearButton creates/activates the button that clears the screen of atoms and bonds.
+   *
+   */
+  void drawClearButton() {
+    clear.drawButton();
+  }
+
+  /** drawColorButtons selects the colors that are stored in the actual buttons
+   *
+   */
+  void drawColorButtons() {
+    buttonColors[0] = color(75, 75, 75);
+    buttonColors[1] = color(255);
+    buttonColors[2] = color(173, 51, 159);
+    buttonColors[3] = color(0, 255, 0);
+    buttonColors[4] = color(0, 0, 255);
+    buttonColors[5] = color(100);
+    buttonColors[6] = color(255, 0, 255);
+    buttonColors[7] = color(0, 255, 255);
+    buttonColors[8] = color(250, 170, 10);
+    buttonColors[9] = color(200);
+    buttonColors[10] = color(255, 100, 0);
+    buttonColors[11] = color(100, 255, 0);
+    buttonColors[12] = color(142, 82, 82);
+    buttonColors[13] = color(100, 0, 255);
+    buttonColors[14] = color(0, 255, 100);
+    buttonColors[15] = color(0, 100, 255);
+    buttonColors[16] = color(98, 44, 44);
+    buttonColors[17] = color(44, 98, 44);
+    buttonColors[18] = color(44, 44, 98);
+    buttonColors[19] = color(102, 95, 83);
+    buttonColors[20] = color(122, 243, 179);
+    buttonColors[21] = color(175, 55, 85);
+    buttonColors[22] = color(99, 156, 99);
+    buttonColors[23] = color(220, 60, 229);
+    buttonColors[24] = color(112, 112, 224);
+    buttonColors[25] = color(99, 100, 255);
+    buttonColors[26] = color(85, 165, 0);
+    buttonColors[27] = color(200, 50, 50);
+    buttonColors[28] = color(50, 100, 50);
+    buttonColors[29] = color(100, 50, 50);
+    buttonColors[30] = color(100, 0, 0);
+    generateColorButtons();
+  }
+
+  /** drawElementRectangle draws an orange rectangular strip which lists the elements available for use, which are color-coded based on their group in the Periodic Table
+   *
+   */
+  void drawElementRectangle() {
+    fill(242, 132, 22);
+    rect(0, 889 * height/1024, width, 135 * height/1024);
+  }
+
+  /** drawElementButtons creates the element buttons where the element symbols are located to ensure users click on the right place to get the desired effect.
+   *
+   */
+  void drawElementButtons() {
+    fill(0);
+    rect(0, height/20, width, height/15);
+    //buttons are drawn below
+    for (int i = 0; i < elementButtons.length; i++) {
+      fill(0);
+      elementButtons[i].drawButton();
+    }
+  }
+
+  /** drawExplainBoxes draws the eBoxes.
+   *
+   */
+  void drawExplainBoxes() {
+    if (currentCharge == 0) {
+      if ((displayExplainBoxes[0] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(255, 3, 142);
+        rect(910 * width/1280, 100 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("The noble gases are unreactive because", 923 * width/1280, 115 * height/1024);
+        text("they already have a full octet of eight", 923 * width/1280, 135 * height/1024);
+        text("valence electrons, making them stable", 923 * width/1280, 155 * height/1024);
+        text("without forming bonds.", 923 * width/1280, 175 * height/1024);
+        text("Examples: He, Ne, Ar, Kr, Xe, Rn", 923 * width/1280, 195 * height/1024); 
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[1] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(144, 82, 23);
+        rect(910 * width/1280, 250 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("The halogens are highly reactive because", 923 * width/1280, 265 * height/1024);
+        text("they have seven valence electrons and", 923 * width/1280, 285 * height/1024);
+        text("thus are one electron away from a full", 923 * width/1280, 305 * height/1024);
+        text("octet, so they aggressively try to obtain", 923 * width/1280, 325 * height/1024);
+        text("that last valence electron through one", 923 * width/1280, 345 * height/1024);
+        text("bond.", 923 * width/1280, 365 * height/1024);
+        text("Examples: H, F, Cl, Br, I, At", 923 * width/1280, 385 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[2] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(130, 23, 144);
+        rect(910 * width/1280, 400 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(255);
+        textAlign(LEFT);
+        text("The Group 6 Elements have six valence", 923 * width/1280, 415 * height/1024);
+        text("electrons, so they need two more to", 923 * width/1280, 435 * height/1024);
+        text("complete a full octet. Thus these", 923 * width/1280, 455 * height/1024);
+        text("elements try to form two bonds.", 923 * width/1280, 475 * height/1024);
+        text("Examples: O, S, Se, Te", 923 * width/1280, 495 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[3] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(0, 0, 255);
+        rect(910 * width/1280, 550 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("The Group 5 Elements have five valence", 923 * width/1280, 565 * height/1024);
+        text("electrons, so they need three more to", 923 * width/1280, 585 * height/1024);
+        text("complete a full octet. Thus these", 923 * width/1280, 605 * height/1024);
+        text("elements try to form three bonds.", 923 * width/1280, 625 * height/1024);
+        text("Examples: N, P, As", 923 * width/1280, 645 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[4] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(0, 255, 0);
+        rect(910 * width/1280, 700 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("The Group 4 Elements have four valence", 923 * width/1280, 715 * height/1024);
+        text("electrons, so they need four more to", 923 * width/1280, 735 * height/1024);
+        text("complete a full octet. Thus these", 923 * width/1280, 755 * height/1024);
+        text("elements try to form four bonds.", 923 * width/1280, 775 * height/1024);
+        text("Examples: C, Si", 923 * width/1280, 795 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[5] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(0);
+        rect(130 * width/1280, 100 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(240, 245, 17);
+        textAlign(LEFT);
+        text("Hydrogen is an exception with the halogens", 143 * width/1280, 115 * height/1024);
+        text("because although it still only needs one", 143 * width/1280, 135 * height/1024);
+        text("bond in order to become stable, its", 143 * width/1280, 155 * height/1024);
+        text("single atoms only have one valence electron;", 143 * width/1280, 175 * height/1024);
+        text("it only needs two valence electrons to be", 143 * width/1280, 195 * height/1024);
+        text("stable, and it only has room for that many", 143 * width/1280, 215 * height/1024);
+        text("in its valence shell.", 143 * width/1280, 235 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[6] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(255, 3, 142);
+        rect(130 * width/1280, 250 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("Helium is an exception with the noble", 143 * width/1280, 265 * height/1024);
+        text("gases because it only requires two", 143 * width/1280, 285 * height/1024);
+        text("valence electrons to be stable. Still,", 143 * width/1280, 305 * height/1024);
+        text("like the other noble gases it usually", 143 * width/1280, 325 * height/1024);
+        text("does not form any bonds.", 143 * width/1280, 345 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[7] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(255, 0, 0);
+        rect(130 * width/1280, 400 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("Beryllium is another exception as it", 143 * width/1280, 415 * height/1024);
+        text("is the only element to be stable", 143 * width/1280, 435 * height/1024);
+        text("with four valence electrons; moreover,", 143 * width/1280, 455 * height/1024);
+        text("it generally forms two bonds.", 143 * width/1280, 475 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[8] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(240, 46, 24);
+        rect(130 * width/1280, 550 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        fill(0);
+        textAlign(LEFT);
+        text("Boron is one other exception; it is", 143 * width/1280, 565 * height/1024);
+        text("stable with six valence electrons, and", 143 * width/1280, 585 * height/1024);
+        text("it usually forms three bonds.", 143 * width/1280, 605 * height/1024);
+        textAlign(CENTER);
+      }
+    } else if (g.currentCharge != 0) {
+      if ((displayExplainBoxes[9] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(255, 0, 0);
+        rect(910 * width/1280, 100 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        textAlign(LEFT);
+        fill(0);
+        text("Click the RECONFIGURE BONDS button", 923 * width/1280, 115 * height/1024);
+        text("again to see a display of resonance.", 923 * width/1280, 135 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[10] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(0, 255, 0);
+        rect(910 * width/1280, 100 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        textAlign(LEFT);
+        fill(0);
+        text("This molecule displays resonance. That", 923 * width/1280, 115 * height/1024);
+        text("means electrons oscillate between serving", 923 * width/1280, 135 * height/1024);
+        text("as a lone pair and a bonding", 923 * width/1280, 155 * height/1024);
+        text("pair to keep charge evenly", 923 * width/1280, 175 * height/1024);
+        text("distributed throughout the molecule.", 923 * width/1280, 195 * height/1024); 
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[11] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(234, 17, 18);
+        rect(130 * width/1280, 250 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        textAlign(LEFT);
+        fill(0);
+        text("The rules of how many bonds elements form", 143 * width/1280, 265 * height/1024);
+        text("in neutrally charged molecules do not apply", 143 * width/1280, 285 * height/1024);
+        text("for polyatomic ions. The individual atoms in", 143 * width/1280, 305 * height/1024 );
+        text("ions have their own bookkeeping method for", 143 * width/1280, 325 * height/1024);
+        text("charges called formal charges based on the number", 143 * width/1280, 345 * height/1024);
+        text("of bonds they have in the polyatomic ion.", 143 * width/1280, 365 * height/1024);
+        textAlign(CENTER);
+      }
+      if ((displayExplainBoxes[12] == true) && (explainToMe.showAnyExplanations == true)) {
+        fill(234, 17, 18);
+        rect(130 * width/1280, 250 * height/1024, 330 * width/1280, 150 * height/1024);
+        textSize(12);
+        textAlign(LEFT);
+        fill(0);
+        text("According to the octet rule, lone atoms will", 143 * width/1280, 265 * height/1024);
+        text("try to lose or gain valence electrons so that", 143 * width/1280, 285 * height/1024);
+        text("their valence shell has exactly eight electrons,", 143 * width/1280, 305 * height/1024);
+        text("with the exception of hydrogen and helium, which", 143 * width/1280, 325 * height/1024);
+        text("aim to have a valence shell with two electrons.", 143 * width/1280, 345 * height/1024);
+        textAlign(CENTER);
+      }
+    }
+  }
+
+  /** displays a set of instructions for how to use the program.
+   *
+   */
+  void drawInstructions() {
+    if ((displayInstructions == true) && (buttonsClicked == 0) && (g.pTable.appear % 2 == 0)) {
+      textSize(32);
+      textAlign(LEFT);
+      if ((backgroundColor == buttonColors[2]) || (backgroundColor == buttonColors[6]) || (backgroundColor == buttonColors[21]) || (backgroundColor == buttonColors[23]) || (backgroundColor == buttonColors[27])) {
+        fill(0, 255, 255);
+      } else {
+        fill(255, 0, 0);
+      }
+      text("Instructions", width/6, 250 * height/1024);
+      textSize(20);
+      if ((backgroundColor == buttonColors[4]) || (backgroundColor == buttonColors[18]) || (backgroundColor == buttonColors[29]) || (backgroundColor == buttonColors[30])) {
+        fill(255);
+      } else {
+        fill(0);
+      }
+      text("Step 1: select an element to use.", width/6, 290 * height/1024);
+      text("Step 2: place the element in a yellow cell by clicking on the cell.", width/6, 320 * height/1024);
+      text("Step 3: repeat Steps 1 and 2 for all elements needed for a molecule.", width/6, 350 * height/1024);
+      text("Step 4: select a charge for your molecule by clicking on a numeric symbol to the right.", width/6, 380 * height/1024);
+      text("Step 5: click the RECONFIGURE BONDS button and the program will place bonds for you.", width/6, 410 * height/1024);
+      text("Step 6: click the Show Explanations button to see why the bonds form.", width/6, 440 * height/1024);
+      text("Step 7: when you are done or make a mistake, click the CLEAR button and start over.", width/6, 470 * height/1024);
+      text("NOTE: If you do not see an element listed, it is not common in covalent bonding.", width/6, 500 * height/1024);
+      textAlign(CENTER);
+    }
+  }
+
+  /** void drawPeriodicTableButton draws the button that projects a periodic table.
+   *
+   */
+  void drawPeriodicTableButton() {
+    pTable.drawButton();
+  }
+
+  /** void drawShowExplanationButton draws the explanation button.
+   *
+   */
+  void drawShowExplanationButton() {
+    explainToMe.drawButton();
+  }
+
+  /** void establishCellPartition builds the partition of cells in the usbale space to draw molecules.
+   *
+   */
+  void establishCellPartition() {
+    final int ROWS = 8;
+    final int COLUMNS = 8;
+    Cell[][] cells = new Cell[8][8];
+  }
+
+  /** generateColorButtons draws and constructs the array for the set of 31 color buttons.
+   *
+   */
+  void generateColorButtons() {
+    colorButtons = new ColorButton[31];
+    for (int i = 0; i < colorButtons.length; i++) {
+      colorButtons[i] = new ColorButton(40 * i, 0, 40, height/20, buttonColors[i]);
+    }
+    for (int i = 0; i < colorButtons.length; i++) {
+      colorButtons[i].drawButton();
+    }
+  }
+
+  /** keepConfiguringBonds allows the bonds to keep reconifugring past one iteration when necessary.
+   *
+   */
+  void keepConfiguringBonds() {
+    if (g.bondConfigurationButton.configure == true) {
+      g.bondConfigurationButton.updateBondNumbers();
+    }
+  }
+
+  /** keepDrawingElements continues to draw elements that are not overwritten so they do not disappear with the screen as it refereshed.
+   *
+   */
+  void keepDrawingElements() {
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        for (int k = 0; k < 24; k++) {
+          if (grid.cells[i][j].occupiedWithWhat == k) {
+            fill(0);
+            textSize(18);
+            text(elementSymbols[k], g.cells[i][j].cellX + g.cells[i][j].cellSizeX * 45/100, g.cells[i][j].cellY + g.cells[i][j].cellSizeY * 45/100);
+          } //continually draws an element that is designated to occupy some sell
+        } //checks which element symbol, if any, must be drawn in each cell
+      } //indexes cells by row
+    } //indexes cells by column
+  }
+
+  /** keepGlowing ensures cells that should be highlighted continue to glow rather than flash back to the background color.
+   *
+   */
+  void keepGlowing() {
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (grid.cells[i][j].isHighlighted == true) {
+          grid.cells[i][j].cellGlow();
+          for (int k = 0; k < elementButtons.length; k++) {
+            if (lastClicked[k] == true) {
+              elementButtons[k].changeColoration(color(48, 225, 240));
+            }
+          }
+        } //checks whether each cell should be glowing
+      } //indexes cells by row
+    } //indexes cells by column
+  }
+
+  /** lockCells serves as an agent to identify errors when creating a nonexistent molecule by modifying an existing molecule.
+   *
+   */
+  void lockCells() {
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (g.grid.cells[i][j].isOccupied == false) {
+          g.grid.cells[i][j].isLocked = true;
+        }
+      }
+    }
+  }
+
+  /** moveElement moves element symbols to new locations after the bond configuration button has been pressed.
+   *
+   */
+  void moveElement(int i, int j, int k) {
+    grid.cells[i][j].isOccupied = true; 
+    grid.cells[i][j].isHighlighted = false;
+    if (lastClicked[k] == true) {
+      fill(0);
+      textSize(18);
+      text(elementSymbols[k], g.cells[i][j].cellX + g.cells[i][j].cellSizeX * 49/100, g.cells[i][j].cellY + g.cells[i][j].cellSizeY * 47/100); //prints appropriate text near the center of the cell
+      grid.cells[i][j].occupiedWithWhat = k;
+    } //the above statements are true for the k elementSymbol that was last clicked
+    grid.cells[i][j].cellColor = backgroundColor;
+    grid.cells[i][j].ceaseGlow();
+    if (g.bondConfigurationButton.configure == true) {
+      lastClicked[k] = true;
+    }
+    elementButtons[k].changeColoration(color(242, 132, 22));
+    keepDrawingElements();
+  }
+
+  /** placeElement places a certain elemental symbol in a predesignated cell and makes it stop glowing based on which cell is being clicked and what element was last clicked.
+   *
+   */
+  void placeElement(int i, int j, int k) {
+    if (g.grid.cells[i][j].isLocked == false) {
+      grid.cells[i][j].isOccupied = true; 
+      grid.cells[i][j].isHighlighted = false;
+      if (lastClicked[k] == true) {
+        fill(0);
+        textSize(18);
+        text(elementSymbols[k], g.cells[i][j].cellX + g.cells[i][j].cellSizeX * 49/100, g.cells[i][j].cellY + g.cells[i][j].cellSizeY * 47/100); //prints appropriate text near the center of the cell
+        grid.cells[i][j].occupiedWithWhat = k;
+      } //the above statements are true for the k elementSymbol that was last clicked
+      grid.cells[i][j].cellColor = backgroundColor;
+      grid.cells[i][j].ceaseGlow();  
+      elementButtons[k].changeColoration(color(242, 132, 22));
+      g.bondConfigurationButton.timesConfigured = 0;
+      mol.moleculeAtoms[k] = mol.moleculeAtoms[k] + 1;
+    }
+  } //closes placeElement
+
+  /** printErrorMessage prints an error message that describes that the molecule proposed does not exist.
+   *
+   */
+  void printErrorMessage() {
+    if ((backgroundColor == buttonColors[2]) || (backgroundColor == buttonColors[6]) || (backgroundColor == buttonColors[21]) || (backgroundColor == buttonColors[23]) || (backgroundColor == buttonColors[27])) {
+      fill(0, 255, 255);
+    } else {
+      fill(255, 0, 0);
+    }
+    if (g.mol.error == true) {
+      textSize(30);
+      text("This molecule/ion (with the given charge) does not exist!", width/2, 53 * height/100);
+      g.clear.checkButton();
+      g.mol.displayErrorMessage = true;
+    }
+    if (g.mol.displayErrorMessage == true) {
+      textSize(30);
+      text("This molecule/ion (with the given charge) does not exist!", width/2, 53 * height/100);
+    }
+  }
+
+  /** printSelectChargeMessage indicates when a charge button needs to be selected.
+   *
+   */
+  void printSelectChargeMessage() {
+    if ((backgroundColor == buttonColors[2]) || (backgroundColor == buttonColors[6]) || (backgroundColor == buttonColors[21]) || (backgroundColor == buttonColors[23]) || (backgroundColor == buttonColors[27])) {
+      fill(0, 255, 255);
+    } else {
+      fill(255, 0, 0);
+    }
+    if (g.mol.needCharge == true) {
+      textSize(30);
+      text("Please select a charge for the atom/molecule first.", width/2, 53 * height/100);
+      g.clear.checkButton();
+      g.mol.displayNeedChargeMessage = true;
+    }
+    if (g.mol.displayNeedChargeMessage == true) {
+      textSize(30);
+      text("Please select a charge for the atom/molecule first.", width/2, 53 * height/100);
+    }
+  }
+
+  /** setUpBondConfigurationButton draws the single bondConfiguration Button.
+   *
+   */
+  void setUpBondConfigurationButton() {
+    bondConfigurationButton = new BondConfigurationButton(795 * width/1280, 889 * height/1024, 250 * width/1280, 30 * height/1024, "RECONFIGURE BONDS");
+  }
+
+  /** setUpCells establishes the cells by calling the cell constructor from every cell.
+   *
+   */
+  void setUpCells() {
+    cells = new Cell[8][8];
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        cells[i][j] = new Cell(width * 24/25 * 1/8 * i + width * 24/25 * 1/8 * 1/16, height/20 + height/15 + .9 * (height - height/20 - height/15 - 110) * 1/8 * j + .9 * (height - height/20 - height/15 - 110) * 1/8 * 1/16, width * 24/25 * 1/8 * 7/8, .9 * (height - height/20 - height/15  - 110) * 1/8 * 7/8, color(0), false, false, -1);
+      }
+    }
+  }
+
+  /** setUpChargeButtons prints the proper charge when some charge button in an array of buttons is called
+   *
+   */
+  void setUpChargeButtons() {
+    //charges is a string array; netCharge is an integer array
+    for (int i = 0; i < 8; i++) {
+      if (i == 0) {
+        charge[i] = 0 + "";
+        netCharge[i] = 0;
+      } else {
+        if (i == 7) {
+          charge[i] = 4 + "-";
+          netCharge[i] = -4;
+        } else {
+          if (i % 2 == 1) {
+            charge[i] = (i + 1)/2 + "+";
+            netCharge[i] = (i + 1)/2;
+          } else if (i % 2 == 0) {
+            charge[i] = i/2 + "-";
+            netCharge[i] = i/2 * -1;
+          }
+        }
+      }
+    }
+
+    //creates the charge buttons with the appropriate text displays atop the buttons (0, 1+, etc.)
+    chargeButtons = new ChargeButton[8];
+    for (int i = 0; i < charge.length; i++) {
+      eXLocation = uW;
+      eYLocation = uH;
+      chargeButtons[i] = new ChargeButton(26 * width/25 - uW, height/20 + height/15 + i * 40 * height/1024, width * 1/25, 40 * height/1024, charge[i]);
+    }
+  }
+
+  /** setUpClearButton establishes the clear button.
+   *
+   */
+  void setUpClearButton() {
+    Button clear = new Button(width - 110, height - 98, 110, 98, "CLEAR");
+  }
+
+  /** setUpColorButtons determines the location of each color button.
+   *
+   */
+  void setUpColorButtons() {
+    colorButtons = new ColorButton[31];
+    for (int i = 0; i < colorButtons.length; i++) {
+      colorButtons[i] = new ColorButton(i * width/(colorButtons.length - 1) + 3, 0, width/(colorButtons.length - 1), height/20, color(0));
+    }
+  }
+
+  /** setUpElementArray establishes the array of elements and their bonds in a molecule.
+   *
+   */
+  void setUpElementArray() {
+    ArrayList<int[]> baseStructure = new ArrayList<int[]>();
+    int[] firstElement = {
+      0, 0, 0, 0
+    };
+    baseStructure.add(firstElement);
+  }
+
+  /** setUpElementButtons creates a string of element names to print for each element button
+   *
+   */
+  void setUpElementButtons() {
+    //creates three strings, one for each property of the elements: the name, symbol, and number of valence electrons
+    String[]elementId = {
+      "Hydrogen", "Helium", "Lithium", "Beryllium", "Boron", "Carbon", "Nitrogen", "Oxygen", "Fluorine", "Neon", "Silicon", "Phosphorus", "Sulfur", "Chlorine", "Argon", "Arsenic", "Selenium", "Bromine", "Krypton", "Tellurium", "Iodine", "Xenon", "Asatine", "Radon"
+    };
+    String[]elementSymbols = {
+      "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne", "Si", "P", "S", "Cl", "Ar", "As", "Se", "Br", "Kr", "Te", "I", "Xe", "At", "Rn"
+    };
+    int[]elementValenceElectrons = {
+      1, 2, 1, 2, 3, 4, 5, 6, 7, 8, 4, 5, 6, 7, 8, 5, 6, 7, 8, 6, 7, 8, 7, 8
+    };
+    //keeps track of maximum number of bonds an element will form excluding expanded octets
+    int[]eToBonds = {
+      1, 1, 1, 2, 3, 4, 3, 2, 1, 0, 4, 3, 2, 1, 0, 3, 2, 1, 0, 2, 1, 0, 1, 0
+    };
+    //constructs buttons more efficiently than creating 24 of them disparately
+    elementButtons = new ElementButton[15];
+    //for loop to generate 24 buttons recursively, but they are not yet physically accessible by a consumer until the next section.
+    for (int i = 0; i < elementButtons.length; i++) {
+      elementButtons[i] = new ElementButton(i * width/elementButtons.length + 3, height/20, width/elementButtons.length, height/15, new Element(elementId[i], elementSymbols[i], elementValenceElectrons[i], eSingleBond, eDoubleBond, eTripleBond), color(242, 132, 22));
+    }
+  }
+
+  //setUpExplanationBoxes creates the explanationBoxes for use
+  void setUpExplanationBoxes() {
+    eBoxes = new ExplainBox[12]; //initializes the array of eBoxes
+    eBoxes[0] = new ExplainBox(7 * uW/8, 2 * uH/8, uW/8, uH/8, color(255, 3, 142), false); //noble gases
+    eBoxes[1] = new ExplainBox(7 * uW/8, 3 * uH/8, uW/8, uH/8, color(144, 82, 223), false); //halogens
+    eBoxes[2] = new ExplainBox(7 * uW/8, 4 * uH/8, uW/8, uH/8, color(130, 23, 144), false); //Group 6 Elements
+    eBoxes[3] = new ExplainBox(7 * uW/8, 5 * uH/8, uW/8, uH/8, color(0, 0, 255), false); //Group 5 Elements
+    eBoxes[4] = new ExplainBox(7 * uW/8, 6 * uH/8, uW/8, uH/8, color(0, 255, 0), false); //Group 4 Elements
+    eBoxes[5] = new ExplainBox(uW/8, 2 * uH/8, uW/8, uH/8, color(0), false); //Hydrogen special case
+    eBoxes[6] = new ExplainBox(uW/8, 3 * uH/8, uW/8, uH/8, color(255, 3, 142), false); //Helium special case
+    eBoxes[7] = new ExplainBox(uW/8, 4 * uH/8, uW/8, uH/8, color(255, 0, 0), false); //Beryllium special case
+    eBoxes[8] = new ExplainBox(uW/8, 5 * uH/8, uW/8, uH/8, color(240, 46, 24), false); //Boron special case
+    eBoxes[9] = new ExplainBox(7 * uW/8, 2 * uH/8, uW/8, uH/8, color(255, 0, 0), false); //resonance 1 click
+    eBoxes[10] = new ExplainBox(7 * uW/8, 2 * uH/8, uW/8, uH/8, color(0, 255, 0), false); //resonance 2 click
+    eBoxes[11] = new ExplainBox(7 * uW/8, 3 * uH/8, uW/8, uH/8, color(0, 255, 0), false); //exceptions for polyatomic ions
+  }
+
+  //draws the grid which contains cells
+  void setUpGrid() {
+    grid = new Grid(cells, 7, 7, uH/8, uW/8);
+  }
+
+  //setUpPeriodicTableButton establishes the periodic table button
+  void setUpPeriodicTableButton() {
+    pTable = new PeriodicTableButton(255 * width/1280, 889 * height/1024, 230 * width/1280, 30 * height/1024, "Periodic Table");
+  }
+
+  //setUpShowExplanationButton establishes the explanation button, namely where it goes
+  void setUpShowExplanationButton() {
+    explainToMe = new ShowExplanationButton(525 * width/1280, 889 * height/1024, 230 * width/1280, 30 * height/1024, "Show Explanations");
+  }
+
+  //yieldCharges displays the symbols on the charge buttons
+  void yieldCharges() {
+    eXLocation = uW;
+    eYLocation = uH;
+    textSize(18); 
+    fill(0);
+    text("0", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 2 * eYLocation/34);
+    text("1+", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 4 * eYLocation/34);
+    text("1-", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 6 * eYLocation/34);
+    text("2+", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 8 * eYLocation/34);
+    text("2-", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 10 * eYLocation/34);
+    text("3+", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 12 * eYLocation/34);
+    text("3-", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 14 * eYLocation/34);
+    text("4-", (width + eXLocation) * 1/2, height/20 + height/15 * .5 + 16 * eYLocation/34);
+    fill(242, 132, 22);
+  }
+
+  void yieldClear() {
+    textSize(24);
+    fill(0);
+    text("CLEAR", width - 130, height - 120, 100, 60);
+  }
+}
