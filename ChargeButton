@@ -1,0 +1,173 @@
+class ChargeButton extends Button {
+
+  boolean showCharge; //if true, appropriate charge is displayed
+  boolean showBracket; //if true, bracket is displayed
+  int[][] possibleXDimension = new int[8][8];
+  int[][] possibleYDimension = new int[8][8];
+  int[] xDimension = new int[8];
+  int[] yDimension = new int[8];
+
+  float bH = height/20 + height/15; //the combined height for the color and element buttons' rectangles
+
+  ChargeButton(float tempX, float tempY, float tempW, float tempH, String charge) {
+    super(tempX, tempY, tempW, tempH, charge);
+    showCharge = false;
+  }
+
+  void drawButton() {
+    textSize(18);
+    fill(242, 132, 22);
+    rect(x, y, w, h);
+    fill(0);
+    textAlign(CENTER, CENTER);
+    text(buttonText, x + .5 * w, y + .5 * h);
+  }
+
+  /** showCharge returns the value of showCharge.
+   *
+   *@ return gives the proper value of showCharge.
+   */
+  boolean showCharge() {
+    return showCharge;
+  }
+
+  //width in cells of molecule
+  int moleculeWidth() {
+    int maxWidth = 0;
+    for (int j = 0; j < 8; j++) {
+      for (int i = 0; i < 8; i++) {
+        if ((g.grid.cells[i][j].isOccupied == true) && (i > maxWidth)) {
+          maxWidth = i;
+        }
+      }
+    }
+    int minWidth = 7;
+    for (int j = 0; j < 8; j++) {
+      for (int i = 7; i > -1; i = i - 1) {
+        if ((g.grid.cells[i][j].isOccupied == true) && (i < minWidth)) {
+          minWidth = i;
+        }
+      }
+    }
+    return maxWidth - minWidth + 1;
+  }
+
+  //height in cells of molecule
+  int moleculeHeight() {
+    int maxHeight = 0;
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if ((g.grid.cells[i][j].isOccupied == true) && (j > maxHeight)) {
+          maxHeight = j;
+        }
+      }
+    }
+    int minHeight = 7;
+    for (int i = 0; i < 8; i++) {
+      for (int j = 7; j > -1; j = j - 1) {
+        if ((g.grid.cells[i][j].isOccupied == true) && (j < minHeight)) {
+          minHeight = j;
+        }
+      }
+    }
+    return maxHeight - minHeight + 1;
+  }
+
+  int moleculeXPosition() {
+    int molX = 7;
+    for (int j = 0; j < 8; j++) {
+      for (int i = 7; i > -1; i = i - 1) {
+        if ((g.grid.cells[i][j].isOccupied == true) && (i < molX)) {
+          molX = i;
+        }
+      }
+    }
+    return molX;
+  }
+
+  int moleculeYPosition() {
+    int molY = 7;
+    for (int i = 0; i < 8; i++) {
+      for (int j = 7; j > -1; j = j - 1) {
+        if ((g.grid.cells[i][j].isOccupied == true) && (j < molY)) {
+          molY = j;
+        }
+      }
+    }
+    return molY;
+  }
+
+  /** changeCurrentCharge alters what charge is displayed.
+   *
+   */
+  void changeCurrentCharge(int i) {
+    if (g.chargeButtons[i].showCharge == true) {
+      g.currentCharge = g.netCharge[i];
+    }
+  }
+
+  /** checkButton checks to see if the charge buttons were clicked, and if so, causes the appropriate charge to display.
+   *
+   */
+  void checkButton() {
+    //y-coordinate in fourth condition below is 1 pixel past the lowest point on the screen where a charge button should activate (the very last one)
+    if ((mouseX > x) && (mouseX < width)) {
+      if ((mouseY > bH) && (mouseY < (bH + 17 * 40 * height/1024))) {
+        if (g.mol.moleculeElementIndex() >= 1) {
+          g.buttonsClicked = g.buttonsClicked + 1;
+        }
+        for (int i = 0; i < g.chargeButtons.length; i++) {
+          g.chargeButtons[i].showCharge = false;
+          if ((mouseY > bH + 40 * height/1024 * i) && (mouseY < bH + 40 * height/1024 * (i + 1))) {
+            g.chargeButtons[i].showCharge = true;
+            changeCurrentCharge(i);
+            g.chargeSelected = true;
+            showBracket = !showBracket;
+            g.chargesSelected = g.chargesSelected + 1;
+          }
+        }
+        if ((g.mol.moleculeElementIndex() == 1) && (g.currentCharge != 0)) {
+          g.mol.monoatomicIonData[1] = g.currentCharge;
+          g.mol.searchMonoatomicIonDictionary();
+        }
+        if ((g.mol.moleculeElementIndex() > 1) && (g.chargesSelected > 2) && (g.bondConfigurationButton.timesConfigured >= 1)) {
+          if (g.currentCharge != 0) {
+            g.mol.validIon = false;
+            g.mol.searchMoleculeDictionary();
+          } else {
+            g.mol.validMolecule = false;
+            g.clear.checkButton();
+            g.mol.searchMoleculeDictionary();
+          }
+        }
+      }
+    }
+  }
+
+  /** draw Brackets draws a bracket when necessary and determines its size based on the dimensions of the molecule in question.
+   *
+   */
+  void checkToDrawBrackets() {
+    float widthFactor = g.grid.cells[4][3].cellX - g.grid.cells[3][3].cellX;
+    float heightFactor = g.grid.cells[3][4].cellY - g.grid.cells[3][3].cellY;
+    if ((showBracket == true) && (g.grid.emptyGrid() == false) && (g.currentCharge != 0)) {
+      fill(0);
+      //right bracket //
+      rect(g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX + .7 * g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX + height/200 + (moleculeWidth() - 1) * widthFactor, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY - height/200, .3 * g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX, height/200);
+      rect(g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX + .7 * g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX + height/200 + (moleculeWidth() - 1) * widthFactor, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY + g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeY + (moleculeHeight() - 1) * heightFactor, .3 * g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX, height/200);
+      rect(g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX + g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX + (moleculeWidth() - 1) * widthFactor, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY, height/200, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeY + heightFactor * (moleculeHeight() - 1));
+      //left bracket
+      rect(g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY - height/200, .3 * g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX, height/200);
+      rect(g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY + g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeY + (moleculeHeight() - 1) * heightFactor, .3 * g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX, height/200);
+      rect(g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY, height/200, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeY + heightFactor * (moleculeHeight() - 1));
+      //charge display
+      for (int i = 0; i < 8; i++) {
+        if (g.chargeButtons[i].showCharge == true) {
+          changeCurrentCharge(i);
+          textSize(17);
+          text(g.charge[i], g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellX + g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellSizeX + (moleculeWidth() - 1) * widthFactor + .015 * width, g.grid.cells[moleculeXPosition()][moleculeYPosition()].cellY + .005 * height);
+        }
+      }
+    }
+  }
+}
