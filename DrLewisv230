@@ -1,0 +1,166 @@
+ //creates the Lewis World that stores all method definitions
+static LewisWorld g;
+PFont font;
+PImage periodicTable;
+PImage logo;
+long startTime;
+//serves as storage for all setup, methods, and mousePressed
+void setup() {
+  g = new LewisWorld(); 
+  font = loadFont("ArialMT-48.vlw");
+  periodicTable = loadImage("FullTable.jpg");
+  logo = loadImage("FinalLogo.png");
+  startTime = millis();
+  size(displayWidth, displayHeight);
+  textFont(font);  
+  size(displayWidth, displayHeight); //setup syntax allows height and width to be adapted for any screen size
+  noStroke(); //no black outline is drawn around shapes
+  background(255);
+  //splashscreen
+  //main set of commands begins here
+  g.backgroundColor = color(255);
+  g.displayInstructions = true;
+  g.setUpElementButtons();
+  g.setUpColorButtons();
+  g.setUpCells();
+  g.setUpChargeButtons();
+  g.setUpGrid();
+  g.clear = new ClearButton(width - 100, height - 100, 100, 60, color(0));
+  g.setUpElementArray();
+  g.establishCellPartition();  
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      g.grid.bondsh[i][j] = new Bond(false, i * g.uW/8 - 1/32 * g.uW/8, i * g.uH/8 - 1/32 * g.uH/8, 2 * g.uW/32, 2 * g.uH/32, 1, false);
+      g.grid.bondsv[i][j] = new Bond(true, i * g.uH/8 - 1/32 * g.uH/8, i * g.uW/8 - 1/32 * g.uW/8, 2 * g.uH/32, 2 * g.uW/32, 1, false);
+    }
+  }
+  g.setUpBondConfigurationButton();
+  g.setUpExplanationBoxes();
+  g.setUpShowExplanationButton();
+  g.setUpPeriodicTableButton();
+}//closes setup method
+
+/** the methods that are repated every time the screen is redrawn, roughly 60 times per second.
+ *
+ */
+void draw() {
+  if (millis() - startTime < 3000) {
+    fill(158, 250, 106);
+    rect(0, 0, width/4, height/4);
+    rect(0, height/2, width/4, height/4);
+    rect(width/4, height/4, width/4, height/4);
+    rect(width/4, 3 * height/4, width/4, height/4);
+    rect(width/2, 0, width/4, height/4);
+    rect(width/2, height/2, width/4, height/4);
+    rect(3 * width/4, height/4, width/4, height/4);
+    rect(3 * width/4, 3 * height/4, width/4, height/4);
+    fill(40, 173, 171);
+    rect(0, height/4, width/4, height/4);
+    rect(0, 3 * height/4, width/4, height/4);
+    rect(width/4, 0, width/4, height/4);
+    rect(width/4, height/2, width/4, height/4);
+    rect(width/2, height/4, width/4, height/4);
+    rect(width/2, 3 * height/4, width/4, height/4);
+    rect(3 * width/4, 0, width/4, height/4);
+    rect(3 * width/4, height/2, width/4, height/4);
+    imageMode(CENTER);
+    //image(logo, width/2, 3 * height/8, 1318 * 0.7, 232 * 0.7);
+    fill(0);
+    if ((millis() % 1000 > 0) && (millis() % 1000 < 200)) {
+      ellipse (width/2 - 50, 2 * height/3, 20, 20);
+    }
+    if ((millis() % 1000 > 200) && (millis() % 1000 < 400)) {
+      ellipse (width/2 - 30, 2 * height/3, 20, 20);
+    }
+    if ((millis() % 1000 > 400) && (millis() % 1000 < 650)) {
+      ellipse (width/2 - 10, 2 * height/3, 20, 20);
+    }
+    if ((millis() % 1000 > 600) && (millis() % 1000 < 800)) {
+      ellipse (width/2 + 10, 2 * height/3, 20, 20);
+    }
+    if ((millis() % 1000 > 800) && (millis() % 1000 < 1000)) {
+      ellipse (width/2 + 30, 2 * height/3, 20, 20);
+    }
+  } else {
+    imageMode(CORNER);
+    background(g.backgroundColor);
+    g.checkToDrawColors();
+    g.drawColorButtons();
+    g.drawElementRectangle();
+    g.yieldCharges(); 
+    g.drawChargeButtons();
+    g.yieldClear();
+    g.keepDrawingElements();
+    g.keepGlowing();
+    g.drawElementButtons();
+    g.drawBondConfigurationButton();
+    g.keepConfiguringBonds();
+    g.drawExplainBoxes();
+    g.drawShowExplanationButton();
+    g.printSelectChargeMessage();
+    g.printErrorMessage();
+    g.drawPeriodicTableButton();
+    for (int i = 0; i < 8; i++) {
+      g.chargeButtons[i].checkToDrawBrackets();
+    }
+    g.pTable.drawGiantPeriodicTable();
+    g.pTable.selectPeriodicTableBoxes();
+    g.drawInstructions();
+  }
+}//closes draw method
+
+/** mousePressed identifies which button type should be activated when the mouse clicks on some point on the screen.
+ *
+ */
+void mousePressed() {
+  for (int i = 0; i < g.chargeButtons.length; i++) {
+    g.chargeButtons[i].checkButton(); 
+    g.chargeDisplay[i] = true;
+  }
+
+  for (int i = 0; i < g.elementButtons.length; i++) {
+    g.elementButtons[i].checkButton();
+  }
+
+  for (int i = 0; i < g.colorButtons.length; i++) {
+    g.colorButtons[i].checkButton();
+  }
+
+  if ((mouseX > (width - 130)) && (mouseX < (width - 30))) {
+    if ((mouseY > (height - 120)) && (mouseY < (height - 60))) {
+      g.clear.checkButton();
+    }
+  }
+
+  for (int i = 0; i < 8; i++) {
+    for (int j = 0; j < 8; j++) {
+      for (int k = 0; k < 24; k++) {
+        if ((g.grid.cells[i][j].cellX < mouseX) && (mouseX < g.grid.cells[i][j].cellX + g.grid.cells[i][j].cellSizeX)) {
+          if ((g.grid.cells[i][j].cellY < mouseY) && (mouseY < g.grid.cells[i][j].cellY + g.grid.cells[i][j].cellSizeY)) { //checks to see which cell is being clicked
+            if ((g.grid.cells[i][j].isOccupied == false) && (g.grid.cells[i][j].isHighlighted == true) && (g.lastClicked[k] == true)) {
+              g.placeElement(i, j, k);
+            } //closes if conditional for placeElement to be called
+          } //ensures the Y-Coordinate of where the mouse is pressed is in some cell
+        } //ensures the X-Coordinate of where the mouse is pressed is in some cell
+      } //indexes according to element Buttons
+    }
+  }
+
+  if ((mouseX > (795 * width/1280)) && (mouseX < (1045 * width/1280))) { 
+    if ((mouseY > (889 * height/1024)) && (mouseY < (919 * height/1024))) {
+      g.bondConfigurationButton.checkButton();
+    }
+  }
+
+  if ((mouseX > (525 * width/1280)) && (mouseX < (755 * width/1280))) {
+    if ((mouseY > (889 * height/1024)) && (mouseY < (919 * height/1024))) {
+      g.explainToMe.checkButton();
+    }
+  }
+
+  if ((mouseX > (255 * width/1280)) && (mouseX < (485 * width/1280))) {
+    if ((mouseY > (889 * height/1024)) && (mouseY < (919 * height/1024))) {
+      g.pTable.checkButton();
+    }
+  }
+} //closes mousePressed
