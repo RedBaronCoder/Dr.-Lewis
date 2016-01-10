@@ -1,0 +1,1284 @@
+//keeps track of building molecules
+class Molecule {
+  //keeps track of how many bonds of each type would be formed by this element, in the same order as the element buttons.
+  ArrayList<int[]> structure; //arbitrary
+
+  boolean displayErrorMessage;
+  boolean displayNeedChargeMessage;
+  boolean error; //should the error message be printed?
+  boolean needCharge; //is a charge needed?
+  boolean isAtom; //does the screen just contain a lone atom?
+  boolean resonate; //does the molecule on-screen resonate?
+  boolean validIon; //is a valid ion being made on-screen?
+  boolean validMolecule; //is this a valid molecule (neutral charge) being made on-screen?
+  boolean validMonoatomicIon; //a variation of validIon specifically for monoatomic ions
+
+  int[] moleculeAtoms = new int[15];
+  int[] monoatomicIonData = new int[2];
+  //Constructor initializes all variables.
+  Molecule(ArrayList<int[]> tempStructure) {
+    tempStructure = structure;
+  }
+
+  //checks if some atom appears in a molecule
+  boolean moleculeContainment(int x) {
+    if (moleculeAtoms[x] > 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //checks to see if an element is in Group 5 (Nitrogen or Phosphorus)
+  boolean isGroup5 (int i) {
+    if ((i == 6) || (i == 11)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //checks to see if an element is in Group 6 (Oxygen or Sulfur)
+  boolean isGroup6 (int i) {
+    if ((i == 7) || (i == 12)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  //checks to see if an element is a halogen besides hydrogen.
+  boolean isGroup7 (int i) {
+    if ((i == 8) || (i == 13)) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  /** counts number of bonded electrons an atom does have
+   *
+   */
+  int bondedElectrons(int i, int j) {
+    int bElectron = 0;
+    if (g.grid.bondsh[i][j].bondUsage == true) {
+      bElectron = bElectron + 2 * g.grid.bondsh[i][j].bondType;
+    }
+    if (g.grid.bondsv[i][j].bondUsage == true) {
+      bElectron = bElectron + 2 * g.grid.bondsv[i][j].bondType;
+    }
+    if (i > 0) {
+      if (g.grid.bondsh[i - 1][j].bondUsage == true) {
+        bElectron = bElectron + 2 * g.grid.bondsh[i - 1][j].bondType;
+      }
+    }
+    if (j > 0) {
+      if (g.grid.bondsv[i][j - 1].bondUsage == true) {
+        bElectron = bElectron + 2 * g.grid.bondsv[i][j - 1].bondType;
+      }
+    }
+    return bElectron;
+  }
+
+  //counts the number of atoms in the molecule that generally form four bonds
+  int fourBondCount() {
+    int fourBond = moleculeAtoms[5] + moleculeAtoms[10];
+    return fourBond;
+  }
+
+  /** counts number of unbonded electrons some atom should have
+   *
+   */
+  int loneElectrons(int i, int j) {
+    if (moleculeElementIndex() > 1) {
+      if (g.grid.cells[i][j].occupiedWithWhat == 0) {
+        if (bondedElectrons(i, j) == 0) {
+          return 1;
+        } else {
+          return 2 - bondedElectrons(i, j);
+        }
+      } else if (g.grid.cells[i][j].occupiedWithWhat == 1) {
+        return 2 - bondedElectrons(i, j);
+      } else if (g.grid.cells[i][j].occupiedWithWhat == 3) {
+        return 4 - bondedElectrons(i, j);
+      } else if (g.grid.cells[i][j].occupiedWithWhat == 4) {
+        return 6 - bondedElectrons(i, j);
+      } else {
+        return 8 - bondedElectrons(i, j);
+      }
+    } else { //individual atoms and monoatomic ions
+      if ((moleculeContainment(0) == true) || (moleculeContainment(2) == true)) {
+        return 1 - g.currentCharge;
+      } else if ((moleculeContainment(1) == true) || (moleculeContainment(3) == true)) {
+        return 2 - g.currentCharge;
+      } else if (moleculeContainment(4) == true) {
+        return 3 - g.currentCharge;
+      } else if ((moleculeContainment(5) == true) || (moleculeContainment(10) == true)) {
+        return 4 - g.currentCharge;
+      } else if ((moleculeContainment(6) == true) || (moleculeContainment(11) == true)) {
+        return 5 - g.currentCharge;
+      } else if ((moleculeContainment(7) == true) || (moleculeContainment(12) == true)) {
+        return 6 - g.currentCharge;
+      } else if ((moleculeContainment(8) == true) || (moleculeContainment(13) == true)) {
+        return 7 - g.currentCharge;
+      } else { //noble gases besides Helium
+        return 8 - g.currentCharge;
+      }
+    }
+  }
+
+  //counts the total number of atoms in the molecule
+  int moleculeElementIndex() {
+    int mei = 0;
+    for (int k = 0; k < g.elementButtons.length; k++) {
+      mei = mei + moleculeAtoms[k];
+    } 
+    return mei;
+  }
+
+  //counts the number of atoms in the molecule that generally form one bond
+  int oneBondCount() {
+    int oneBond = moleculeAtoms[0] + moleculeAtoms[8] + moleculeAtoms[13];
+    return oneBond;
+  }
+
+  //counts the number of atoms in the molecule that generally form three bonds
+  int threeBondCount() {
+    int threeBond = moleculeAtoms[4] + moleculeAtoms[6] + moleculeAtoms[11];
+    return threeBond;
+  }
+
+  //counts the number of atoms in the molecule that generally form two bonds
+  int twoBondCount() {
+    int twoBond = moleculeAtoms[3] + moleculeAtoms[7] + moleculeAtoms[12];
+    return twoBond;
+  }
+
+  //counts the number of types of atoms in the molecule
+  int typeOfAtomsCount() {
+    int tAtom = 0;
+    for (int i = 0; i < g.elementButtons.length; i++) {
+      if (moleculeAtoms[i] != 0) {
+        tAtom = tAtom + 1;
+      }
+    } 
+    return tAtom;
+  }
+
+  //counts the number of atoms in the molecule that generally form zero bonds
+  int zeroBondCount() {
+    int zeroBond = moleculeAtoms[1] + moleculeAtoms[9];
+    return zeroBond;
+  }
+
+  //tells where to add lone pairs on a molecule and adds them.
+  void addLonePairs() {
+    fill(0);
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        float x = g.grid.cells[i][j].cellX;
+        float y = g.grid.cells[i][j].cellY;
+        float w = g.grid.cells[i][j].cellSizeX;
+        float h = g.grid.cells[i][j].cellSizeY;
+        if (g.grid.cells[i][j].isOccupied == true) {
+          int remainingElectrons = loneElectrons(i, j);
+          if (j > 0) {
+            if (g.grid.bondsv[i][j - 1].bondUsage == false) {
+              if (remainingElectrons > 0) {
+                ellipse(x + .45 * w - .1 * w, y + .45 * h - .25 * h, 5, 5);
+                remainingElectrons = remainingElectrons - 1;
+              }
+              if (remainingElectrons > 0) {
+                ellipse(x + .45 * w + .1 * w, y + .45 * h - .25 * h, 5, 5);
+                remainingElectrons = remainingElectrons - 1;
+              }
+            }
+          }
+          if (g.grid.bondsh[i][j].bondUsage == false) {
+            if (remainingElectrons > 0) {
+              ellipse(x + .45 * w + .25 * w, y + .45 * h - .1 * h, 5, 5);
+              remainingElectrons = remainingElectrons - 1;
+            }
+            if (remainingElectrons > 0) {
+              ellipse(x + .45 * w + .25 * w, y + .45 * h + .1 * h, 5, 5);
+              remainingElectrons = remainingElectrons - 1;
+            }
+          }
+          if (g.grid.bondsv[i][j].bondUsage == false) {
+            if (remainingElectrons > 0) {
+              ellipse(x + .45 * w + .1 * w, y + .45 * h + .25 * h, 5, 5);
+              remainingElectrons = remainingElectrons - 1;
+            }
+            if (remainingElectrons > 0) {
+              ellipse(x + .45 * w - .1 * w, y + .45 * h + .25 * h, 5, 5);
+              remainingElectrons = remainingElectrons - 1;
+            }
+          }
+          if (i > 0) {
+            if (g.grid.bondsh[i - 1][j].bondUsage == false) {
+              if (remainingElectrons > 0) {
+                ellipse(x + .45 * w - .25 * w, y + .45 * h + .1 * h, 5, 5);
+                remainingElectrons = remainingElectrons - 1;
+              }
+              if (remainingElectrons > 0) {
+                ellipse(x + .45 * w - .25 * w, y + .45 * h - .1 * h, 5, 5);
+                remainingElectrons = remainingElectrons - 1;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /** This dictionary tries to identify what arrangements of bonds can form with the given structure of the molecule.
+   *
+   */
+  void searchMoleculeDictionary() {
+    if (moleculeElementIndex() == 1) { //lone atoms and ions
+      isAtom = true;
+      for (int x = 0; x < g.elementButtons.length; x++) {
+        if (moleculeContainment(x) == true) {
+          g.moveElement(3, 3, x); //test for valid monoatomic ion here
+        }
+      }
+    }
+    if (moleculeElementIndex() > 1) {
+      isAtom = false;
+    }
+    if ((moleculeElementIndex() == 1) || (g.currentCharge != 0)) {
+      monoatomicIonData[1] = g.currentCharge;
+      searchMonoatomicIonDictionary();
+    }
+    //Groups:
+    //Carbon, Silicon
+    //Nitrogen, Phosphorus, Arsenic
+    //Oxygen, Sulfur, Selenium, Tellurium
+    //Hydrogen, Fluroine, Chlorine, Bromine, Iodine
+    //Helium, Neon, Argon, Krypton, Xenon, Radon
+    if (g.currentCharge == 0) {
+      if (moleculeElementIndex() == 2) { //molecules with two atoms
+        for (int y = 0; y < 15; y++) {
+          for (int x = 14; x > -1; x = x - 1) {
+            if ((moleculeContainment(x) == true) && (moleculeContainment(y) == true)) {
+              if (oneBondCount() == 2) { 
+                g.moveElement(3, 3, x);
+                g.moveElement(4, 3, y);
+                validMolecule = true;
+                g.grid.bondsh[3][3].bondUsage = true;
+                g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+              }
+              if (twoBondCount() == 2) {
+                g.moveElement(3, 3, x);
+                g.moveElement(4, 3, y);
+                validMolecule = true;
+                g.grid.bondsh[3][3].bondUsage = true;
+                g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+              }
+              if (threeBondCount() == 2) {
+                g.moveElement(3, 3, x);
+                g.moveElement(4, 3, y);
+                validMolecule = true;
+                g.grid.bondsh[3][3].bondUsage = true;
+                g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 3, true);
+              }
+            }
+          }
+        }
+        if (oneBondCount() == 2) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+          validMolecule = true;
+        } else if (twoBondCount() == 2) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+          validMolecule = true;
+        } else if (threeBondCount() == 2) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 3, true);
+          validMolecule = true;
+        }
+      } else if (moleculeElementIndex() == 3) { //molecules with three atoms //start here
+        g.grid.bondsh[3][3].bondUsage = true;
+        g.grid.bondsh[4][3].bondUsage = true;
+        if ((oneBondCount() == 2) && (twoBondCount() == 1)) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+          for (int x = 0; x < 15; x++) {
+            if ((g.bondConfigurationButton.oneBondTendency(x) == true) && (moleculeAtoms[x] >= 1)) {
+              g.moveElement(3, 3, x);
+              for (int y = 0; y < 15; y++) {
+                if ((g.bondConfigurationButton.twoBondTendency(y) == true) && (moleculeAtoms[y] >= 1)) {
+                  g.moveElement(4, 3, y);
+                  for (int z = 0; z < 15; z++) {
+                    if ((g.bondConfigurationButton.oneBondTendency(z) == true) && (moleculeAtoms[z] >= 1)) {
+                      if (z != x) {
+                        g.moveElement(5, 3, z);
+                        validMolecule = true;
+                      } else if (typeOfAtomsCount() == 2) {
+                        g.moveElement(5, 3, x);
+                        validMolecule = true;
+                        g.grid.bondsh[3][3].bondUsage = true;
+                        g.grid.bondsh[4][3].bondUsage = true;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if ((oneBondCount() == 1) && (twoBondCount() == 1) && (threeBondCount() == 1)) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+          for (int x = 0; x < 15; x++) {
+            if ((g.bondConfigurationButton.oneBondTendency(x) == true) && (moleculeAtoms[x] >= 1)) {
+              g.moveElement(3, 3, x);
+              for (int y = 0; y < 15; y++) {
+                if ((g.bondConfigurationButton.threeBondTendency(y) == true) && (moleculeAtoms[y] >= 1)) {
+                  g.moveElement(4, 3, y);
+                  for (int z = 0; z < 15; z++) {
+                    if ((g.bondConfigurationButton.twoBondTendency(z) == true) && (moleculeAtoms[z] >= 1)) {
+                      g.moveElement(5, 3, z);
+                      validMolecule = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if ((oneBondCount() == 1) && (threeBondCount() == 1) && (fourBondCount() == 1)) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 3, true);
+          for (int x = 0; x < 15; x++) {
+            if ((g.bondConfigurationButton.oneBondTendency(x) == true) && (moleculeAtoms[x] >= 1)) {
+              g.moveElement(3, 3, x);
+              for (int y = 0; y < 15; y++) {
+                if ((g.bondConfigurationButton.fourBondTendency(y) == true) && (moleculeAtoms[y] >= 1)) {
+                  g.moveElement(4, 3, y);
+                  for (int z = 0; z < 15; z++) {
+                    if ((g.bondConfigurationButton.threeBondTendency(z) == true) && (moleculeAtoms[z] >= 1)) {
+                      g.moveElement(5, 3, z);
+                      validMolecule = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if ((twoBondCount() == 2) && (fourBondCount() == 1)) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true); 
+          for (int x = 0; x < 15; x++) {
+            if ((g.bondConfigurationButton.twoBondTendency(x) == true) && (moleculeAtoms[x] >= 1)) {
+              g.moveElement(3, 3, x);
+              for (int y = 0; y < 15; y++) {
+                if ((g.bondConfigurationButton.fourBondTendency(y) == true) && (moleculeAtoms[y] >= 1)) {
+                  g.moveElement(4, 3, y);
+                  for (int z = 0; z < 15; z++) {
+                    if ((g.bondConfigurationButton.twoBondTendency(z) == true) && (moleculeAtoms[z] >= 1)) { 
+                      if (z != x) {
+                        g.moveElement(5, 3, z);
+                        validMolecule = true;
+                      } else if (typeOfAtomsCount() == 2) {
+                        g.moveElement(5, 3, x);
+                        validMolecule = true;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (moleculeElementIndex() == 4) { //start here
+        g.grid.bondsh[3][3].bondUsage = true;
+        g.grid.bondsh[4][3].bondUsage = true;
+        g.grid.bondsv[4][3].bondUsage = true;
+        if ((oneBondCount() == 3) && (threeBondCount() == 1)) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+          for (int w = 0; w < 15; w++) {
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                if ((typeOfAtomsCount() == 2) && (g.bondConfigurationButton.oneBondTendency(w) == true) && (moleculeAtoms[w] == 3)) {
+                  g.moveElement(3, 3, w); 
+                  g.moveElement(5, 3, w);
+                  g.moveElement(4, 4, w);
+                  for (int z = 0; z < 15; z++) {
+                    if ((g.bondConfigurationButton.threeBondTendency(z) == true) && (moleculeAtoms[z] == 1)) {
+                      g.moveElement(4, 3, z);
+                      validMolecule = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if ((oneBondCount() == 2) && (twoBondCount() == 1) && (fourBondCount() == 1)) {
+          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 2, true);
+          for (int w = 0; w < 15; w++) {
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                if (typeOfAtomsCount() == 3) {
+                  if ((moleculeAtoms[w] == 2) && (moleculeAtoms[x] == 1) && (g.bondConfigurationButton.oneBondTendency(w) == true) && (g.bondConfigurationButton.twoBondTendency(x) == true)) {
+                    g.moveElement(3, 3, w);
+                    g.moveElement(5, 3, w);
+                    g.moveElement(4, 4, x);
+                    for (int z = 0; z < 15; z++) {
+                      if ((g.bondConfigurationButton.fourBondTendency(z) == true) && (moleculeAtoms[z] == 1)) {
+                        g.moveElement(4, 3, z);
+                        validMolecule = true;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (moleculeElementIndex() == 5) {
+        g.grid.bondsh[3][3].bondUsage = true;
+        g.grid.bondsh[4][3].bondUsage = true;
+        g.grid.bondsv[4][3].bondUsage = true;
+        g.grid.bondsv[4][2].bondUsage = true;
+        g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+        g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+        g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+        g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+        if (typeOfAtomsCount() == 2) {
+          for (int y = 0; y < 15; y++) {
+            for (int z = 0; z < 15; z++) {
+              if ((moleculeAtoms[y] == 4) && (g.bondConfigurationButton.oneBondTendency(y) == true)) {
+                if ((moleculeAtoms[z] == 1) && (g.bondConfigurationButton.fourBondTendency(z) == true)) {
+                  g.moveElement(4, 3, z);
+                  g.moveElement(3, 3, y);
+                  g.moveElement(4, 2, y);
+                  g.moveElement(5, 3, y);
+                  g.moveElement(4, 4, y);             
+                  validMolecule = true;
+                }
+              }
+            }
+          }
+        } else if (typeOfAtomsCount() == 3) {
+          for (int x = 0; x < 15; x++) {
+            for (int y = 0; y < 15; y++) {
+              if ((g.bondConfigurationButton.oneBondTendency(x) == true) && (g.bondConfigurationButton.oneBondTendency(y) == true)) {
+                if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 3)) {
+                  g.moveElement(3, 3, x);
+                  g.moveElement(4, 2, y);
+                  g.moveElement(5, 3, y);
+                  g.moveElement(4, 4, y);
+                  validMolecule = true;
+                } else if ((moleculeAtoms[x] == 2) && (moleculeAtoms[y] == 2) && (y > x)) {
+                  g.moveElement(3, 3, x);
+                  g.moveElement(4, 2, x);
+                  g.moveElement(5, 3, y);
+                  g.moveElement(4, 4, y);
+                  validMolecule = true;
+                }
+              }
+            }
+          }
+          for (int z = 0; z < 15; z++) {
+            if ((moleculeAtoms[z] == 1) && (g.bondConfigurationButton.fourBondTendency(z) == true)) {
+              g.moveElement(4, 3, z);
+              validMolecule = true;
+            }
+          }
+        }
+      }
+    } else if (g.currentCharge != 0) {
+      if (moleculeElementIndex() == 2) {
+        if (g.currentCharge == -1) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((g.bondConfigurationButton.twoBondTendency(y) == true) && (g.bondConfigurationButton.oneBondTendency(z) == true)) {
+                  if ((moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    validIon = true;
+                  }
+                } else if ((g.bondConfigurationButton.threeBondTendency(y) == true) && (g.bondConfigurationButton.fourBondTendency(z) == true)) {
+                  if ((moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 3, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          }
+        } 
+        if (g.currentCharge == -2) {
+          if (typeOfAtomsCount() == 1) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+            for (int z = 0; z < 15; z++) {
+              if ((z == 7) || (z == 12)) {
+                if (moleculeAtoms[z] == 2) {
+                  g.moveElement(3, 3, z);
+                  g.moveElement(4, 3, z);
+                  validIon = true;
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if (z > y) {
+                  if ((y == 7) && (z == 12)) {
+                    if ((moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                      g.moveElement(3, 3, y);
+                      g.moveElement(4, 3, z);
+                      validIon = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (moleculeElementIndex() == 3) {
+        if (g.currentCharge == -1) { 
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((isGroup7(y) == true) && (g.bondConfigurationButton.twoBondTendency(z) == true)) {
+                  if ((moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 2)) {
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.moveElement(3, 3, z);
+                    g.moveElement(4, 3, y);
+                    g.moveElement(5, 3, z);
+                    validIon = true;
+                  }
+                } else if ((g.bondConfigurationButton.twoBondTendency(y) == true) && ((z == 6) || (z == 11))) {
+                  if ((moleculeAtoms[y] == 2) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    resonate = true;
+                    validIon = true;
+                    if (g.bondConfigurationButton.timesConfigured % 2 == 1) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                    } else if (g.bondConfigurationButton.timesConfigured % 2 == 0) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    }
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) { 
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                if (y > x) {
+                  for (int z = 0; z < 15; z++) {
+                    if ((isGroup7(z) == true) && (g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                      if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                        g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                        g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, y);
+                        validIon = true;
+                      }
+                    } else if ((g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true) && ((z == 6) || (z == 11))) {
+                      if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, y);
+                        resonate = true;
+                        validIon = true;
+                        if (g.bondConfigurationButton.timesConfigured % 2 == 1) { 
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                        } else if (g.bondConfigurationButton.timesConfigured % 2 == 0) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -2) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((g.bondConfigurationButton.twoBondTendency(y) == true) && (g.bondConfigurationButton.fourBondTendency(z) == true)) {
+                  if ((moleculeAtoms[y] == 2) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    validIon = true;
+                    resonate = true;
+                    if (g.bondConfigurationButton.timesConfigured % 2 == 1) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                    } else if (g.bondConfigurationButton.timesConfigured % 2 == 0) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    }
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                for (int z = 0; z < 15; z++) {
+                  if (y > x) {
+                    if ((g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true) && (g.bondConfigurationButton.fourBondTendency(z) == true)) {
+                      if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, y);
+                        resonate = true;
+                        validIon = true;
+                        if (g.bondConfigurationButton.timesConfigured % 2 == 1) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                        } else if (g.bondConfigurationButton.timesConfigured % 2 == 0) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (moleculeElementIndex() == 4) {
+        if (g.currentCharge == 1) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((g.bondConfigurationButton.oneBondTendency(y) == true) && (isGroup6(z) == true)) {
+                  if ((moleculeAtoms[y] == 3) && (moleculeAtoms[z] == 1)) {
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                for (int z = 0; z < 15; z++) {
+                  if ((g.bondConfigurationButton.oneBondTendency(x) == true) && (g.bondConfigurationButton.oneBondTendency(y) == true) && (isGroup6(z) == true)) {
+                    if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 2) && (moleculeAtoms[z] == 1)) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                      g.moveElement(3, 3, y);
+                      g.moveElement(4, 3, z);
+                      g.moveElement(5, 3, y);
+                      g.moveElement(4, 4, x);
+                      validIon = true;
+                    }
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 4) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int w = 0; w < 15; w++) {
+              for (int x = 0; x < 15; x++) {
+                for (int y = 0; y < 15; y++) {
+                  for (int z = 0; z < 15; z++) {
+                    if ((g.bondConfigurationButton.oneBondTendency(w) == true) && (g.bondConfigurationButton.oneBondTendency(x) == true) && (g.bondConfigurationButton.oneBondTendency(y) == true) && (isGroup6(z) == true)) {
+                      if ((y > x) && (x > w)) {
+                        if ((moleculeAtoms[w] == 1) && (moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                          g.moveElement(3, 3, w);
+                          g.moveElement(4, 3, z);
+                          g.moveElement(5, 3, y);
+                          g.moveElement(4, 4, x);
+                          validIon = true;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -1) {
+          if (typeOfAtomsCount() == 2) { 
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((isGroup7(z) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 3) && (moleculeAtoms[z] == 1)) {
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    validIon = true;
+                  }
+                } else if ((z == 6) && (g.bondConfigurationButton.twoBondTendency(y) == true)) { 
+                  if ((moleculeAtoms[y] == 3) && (moleculeAtoms[6] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    validIon = true;
+                    resonate = true;
+                    if (g.bondConfigurationButton.timesConfigured % 3 == 1) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 2, true);
+                    } else if (g.bondConfigurationButton.timesConfigured % 3 == 2) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    } else if (g.bondConfigurationButton.timesConfigured % 3 == 0) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    }
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) { 
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                for (int z = 0; z < 15; z++) {
+                  if (y > x) {
+                    if ((isGroup7(z) == true) && (g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                      if ((moleculeAtoms[x] == 2) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                        g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                        g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                        g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, x);
+                        g.moveElement(4, 4, y);
+                        validIon = true;
+                      }
+                    } else if ((z == 6) && (g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                      if ((moleculeAtoms[x] == 2) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, x);
+                        g.moveElement(4, 4, y);
+                        resonate = true;
+                        validIon = true;
+                        if (g.bondConfigurationButton.timesConfigured % 3 == 1) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 2, true);
+                        } else if (g.bondConfigurationButton.timesConfigured % 3 == 2) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                        } else if (g.bondConfigurationButton.timesConfigured % 3 == 0) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 4) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int w = 0; w < 15; w++) {
+              for (int x = 0; x < 15; x++) {
+                for (int y = 0; y < 15; y++) {
+                  for (int z = 0; z < 15; z++) {
+                    if ((y > x) && (x > w)) {
+                      if ((isGroup7(z) == true) && (g.bondConfigurationButton.twoBondTendency(w) == true) && (g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                        if ((moleculeAtoms[w] == 1) && (moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                          g.moveElement(3, 3, w);
+                          g.moveElement(4, 3, z);
+                          g.moveElement(5, 3, x);
+                          g.moveElement(4, 4, y);
+                          validIon = true;
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -2) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((isGroup6(z) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 3) && (moleculeAtoms[z] == 1)) {
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    validIon = true;
+                  }
+                } else if ((g.bondConfigurationButton.fourBondTendency(z) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 3) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    validIon = true;
+                    resonate = true;
+                    if (g.bondConfigurationButton.timesConfigured % 3 == 1) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    } else if (g.bondConfigurationButton.timesConfigured % 3 == 2) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    } else if (g.bondConfigurationButton.timesConfigured % 3 == 0) {
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 2, true);
+                    }
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                for (int z = 0; z < 15; z++) {
+                  if (y > x) {
+                    if ((z == 12) && (g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) { //Sulfur must always be the central atom.
+                      if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 2) && (moleculeAtoms[12] == 1)) {
+                        g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                        g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                        g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, 12);
+                        g.moveElement(5, 3, y);
+                        g.moveElement(4, 4, y);
+                        validIon = true;
+                      }
+                    } else if ((g.bondConfigurationButton.fourBondTendency(z) == true) && (g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                      if ((moleculeAtoms[x] == 2) && (moleculeAtoms[y] == 1) && (moleculeAtoms[z] == 1)) {
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, x);
+                        g.moveElement(4, 4, y);
+                        validIon = true;
+                        resonate = true;
+                        if (g.bondConfigurationButton.timesConfigured % 3 == 1) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 2, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                        } else if (g.bondConfigurationButton.timesConfigured % 3 == 2) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 2, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                        } else if (g.bondConfigurationButton.timesConfigured % 3 == 0) {
+                          g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                          g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                          g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 2, true);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -3) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if (((y == 7) || (y == 12)) && (z == 11)) {
+                  if ((moleculeAtoms[z] == 1) && (moleculeAtoms[y] == 3)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                for (int z = 0; z < 15; z++) {
+                  if ((g.bondConfigurationButton.twoBondTendency(x) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true) && (z == 11)) { 
+                    if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 2) && (moleculeAtoms[z] == 1)) {
+                      g.moveElement(3, 3, x);
+                      g.moveElement(4, 3, z);
+                      g.moveElement(5, 3, y);
+                      g.moveElement(4, 4, y);
+                      g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                      g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                      g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                      validIon = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -4) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((g.bondConfigurationButton.twoBondTendency(y) == true) && (z == 10)) {
+                  if ((moleculeAtoms[y] == 3) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      } else if (moleculeElementIndex() == 5) {
+        if (g.currentCharge == 1) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][2].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((isGroup5(z) == true) && (g.bondConfigurationButton.oneBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 4) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(4, 2, y);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y); 
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][2].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int x = 0; x < 15; x++) {
+              for (int y = 0; y < 15; y++) {
+                for (int z = 0; z < 15; z++) {
+                  g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                  g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                  g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+                  g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                  if ((isGroup5(z) == true) && (g.bondConfigurationButton.oneBondTendency(y) == true) && (g.bondConfigurationButton.oneBondTendency(x) == true)) {
+                    if (y > x) {
+                      if ((moleculeAtoms[x] == 2) && (moleculeAtoms[y] == 2) && (moleculeAtoms[z] == 1)) {
+                        g.moveElement(4, 2, x);
+                        g.moveElement(3, 3, x);
+                        g.moveElement(4, 3, z);
+                        g.moveElement(5, 3, y);
+                        g.moveElement(4, 4, y);
+                        validIon = true;
+                      }
+                    }
+                    if ((moleculeAtoms[x] == 1) && (moleculeAtoms[y] == 3) && (moleculeAtoms[z] == 1)) {
+                      g.moveElement(4, 2, x);
+                      g.moveElement(3, 3, y);
+                      g.moveElement(4, 3, z);
+                      g.moveElement(5, 3, y);
+                      g.moveElement(4, 4, y);
+                      validIon = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -1) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][2].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((isGroup7(z) == true) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 4) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(4, 2, y);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -2) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][2].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((z == 12) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 4) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(4, 2, y);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y);
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          } else if (typeOfAtomsCount() == 3) {
+          }
+        } else if (g.currentCharge == -3) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][2].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((z == 11) && ((y == 7) || (y == 12))) {
+                  if ((moleculeAtoms[y] == 4) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(4, 2, y);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y); 
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          }
+        } else if (g.currentCharge == -4) {
+          if (typeOfAtomsCount() == 2) {
+            g.grid.bondsh[3][3].bondUsage = true;
+            g.grid.bondsh[4][3].bondUsage = true;
+            g.grid.bondsv[4][2].bondUsage = true;
+            g.grid.bondsv[4][3].bondUsage = true;
+            for (int y = 0; y < 15; y++) {
+              for (int z = 0; z < 15; z++) {
+                if ((z == 10) && (g.bondConfigurationButton.twoBondTendency(y) == true)) {
+                  if ((moleculeAtoms[y] == 4) && (moleculeAtoms[z] == 1)) {
+                    g.moveElement(4, 2, y);
+                    g.moveElement(3, 3, y);
+                    g.moveElement(4, 3, z);
+                    g.moveElement(5, 3, y);
+                    g.moveElement(4, 4, y); 
+                    g.grid.bondsh[3][3].visifyHorizontalBond(3, 3, 1, true);
+                    g.grid.bondsh[4][3].visifyHorizontalBond(4, 3, 1, true);
+                    g.grid.bondsv[4][2].visifyVerticalBond(4, 2, 1, true);
+                    g.grid.bondsv[4][3].visifyVerticalBond(4, 3, 1, true);
+                    validIon = true;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    for (int i = 0; i < 11; i++) { //draws appropriate explanation boxes
+      g.eBoxes[i].chooseExplainBoxes();
+    }
+    if (g.chargeSelected == false) {
+      needCharge = true;
+    } else if (g.chargeSelected == true) {
+      needCharge = false;
+      if ((moleculeElementIndex() > 1) && (validIon == false)) {
+        if ((g.currentCharge == 0) && (validMolecule == true)) {
+          error = false;
+        } else if ((g.currentCharge == 0) && (validMolecule == false)) {
+          error = true;
+        } else if ((g.currentCharge != 0) && (validIon == false)) {
+          error = true;
+        }
+      }
+      if ((moleculeElementIndex() == 1) && (validMonoatomicIon == false) && (g.currentCharge != 0)) {
+        error = true;
+      }
+    }
+    addLonePairs();
+    g.lockCells();
+  } //end of H molecules
+
+    void searchMonoatomicIonDictionary() {
+    for (int i = 0; i < g.elementButtons.length; i++) { 
+      if (g.grid.cells[3][3].occupiedWithWhat == i) {
+        monoatomicIonData[0] = i;
+      }
+    }
+    if (monoatomicIonData[0] == 0) {
+      if ((monoatomicIonData[1] == -1) || (monoatomicIonData[1] == 1)) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if (monoatomicIonData[0] == 2) {
+      if (monoatomicIonData[1] == 1) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if (monoatomicIonData[0] == 3) {
+      if (monoatomicIonData[1] == 2) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if (monoatomicIonData[0] == 4) {
+      if (monoatomicIonData[1] == 3) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if ((monoatomicIonData[0] == 5) || (monoatomicIonData[0] == 10)) {
+      if (monoatomicIonData[1] == -4) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if ((monoatomicIonData[0] == 6) || (monoatomicIonData[0] == 11)) {
+      if (monoatomicIonData[1] == -3) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if ((monoatomicIonData[0] == 7) || (monoatomicIonData[0] == 12)) {
+      if (monoatomicIonData[1] == -2) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    } else if ((monoatomicIonData[0] == 8) || (monoatomicIonData[0] == 13)) {
+      if (monoatomicIonData[1] == -1) {
+        validMonoatomicIon = true;
+      } else {
+        validMonoatomicIon = false;
+      }
+    }
+  }
+
+
+  /** Determines how many atoms are being displayed on the screen.
+   *
+   */
+  int numberOfAtoms() {
+    int atomNumber = 0;
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (g.grid.cells[i][j].isOccupied == true) {
+          atomNumber = atomNumber + 1;
+        }
+      }
+    }
+    return atomNumber;
+  }
+
+  /** Determines number of bonding areas are needed to connect all atoms currently on the screen.
+   *
+   */
+  int numberOfBonds(int atomNumber) {
+    return atomNumber - 1;
+  }
+}
