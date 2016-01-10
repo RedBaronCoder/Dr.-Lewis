@@ -1,0 +1,16 @@
+class ShowExplanationButton extends Button {
+
+  boolean showAnyExplanations;
+
+  ShowExplanationButton(float tempX, float tempY, float tempW, float tempH, String tempLabel) {
+    super(tempX, tempY, tempW, tempH, tempLabel);
+    showAnyExplanations = false;
+  }
+
+  void checkButton() {
+    if (g.mol.moleculeElementIndex() >= 1) {
+    showAnyExplanations = !showAnyExplanations;
+    g.buttonsClicked = g.buttonsClicked + 1;
+    }
+  }
+}
