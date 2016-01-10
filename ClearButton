@@ -1,0 +1,82 @@
+class ClearButton extends Button {
+
+  boolean showClear; //if true, screen is cleared
+  /** showClear returns the value selected for showClear.
+   *
+   *@return returns the value selected for showClear.
+   */
+  color buttonColor;
+
+  //Constructor initializes all variables as before, +color as well
+  //c: color that the button uses for its function
+  ClearButton(float tempX, float tempY, float tempW, float tempH, color c) {    
+    super(tempX, tempY, tempW, tempH);
+    buttonColor = c;
+    showClear = false;
+  }
+
+  /** showClear returns the value of showClear.
+   *
+   */
+  boolean showClear() {
+    return showClear;
+  }
+
+  /** checkButton checks, once we see that it should be activated, and allows it to clear the screen
+   *
+   */
+  void checkButton() {
+      //turns off all element buttons and removes all dots only when the clear button (with predesignated coordinates) is clicked, removes extraneous removals of elements  
+      DrLewisv230.g.allElementsOff();
+      for (int i = 0; i < g.elementButtons.length; i++) {
+        g.lastClicked[i] = false;
+        g.elementButtons[i].changeColoration(color(242, 132, 22));
+        g.mol.moleculeAtoms[i] = 0;
+      }
+      for (int i = 0; i < g.chargeButtons.length; i++) {
+        g.chargeButtons[i].showCharge = false;
+      }
+      for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+          g.cells[i][j].isHighlighted = false;
+          g.cells[i][j].isOccupied = false;
+          g.cells[i][j].occupiedWithWhat = -1; 
+          g.grid.bondsh[i][j].bondUsage = false;
+          g.grid.bondsv[i][j].bondUsage = false;
+          g.grid.cells[i][j].isLocked = false;
+        }
+      }
+      fill(g.backgroundColor);
+      rect(g.uW/4 + (9 * g.uW/2 - g.uH/2)/96 - g.uW/56, g.uH/2 - g.uH/12 - g.uH/28, g.uH/14, g.uH/14);
+      g.bondConfigurationButton.timesConfigured = 0;
+      g.bondConfigurationButton.configure = false;
+    for (int i = 0; i < 13; i++) {
+      g.displayExplainBoxes[i] = false;
+    }
+    g.explainToMe.showAnyExplanations = false;
+    g.mol.error = false;
+    for (int i = 0; i < 8; i++) {
+      g.chargeButtons[i].showBracket = false;
+    }
+    g.mol.isAtom = false;
+    g.currentCharge = 0;
+    g.chargeSelected = false;
+    g.mol.needCharge = false;
+    g.mol.resonate = false;
+    g.mol.validIon = false;
+    g.mol.validMonoatomicIon = false;
+    g.mol.displayNeedChargeMessage = false;
+    g.mol.displayErrorMessage = false;
+    g.mol.monoatomicIonData[0] = 0;
+    g.mol.monoatomicIonData[1] = 0;
+    g.mol.validMolecule = false;
+    g.chargesSelected = 0;
+    for (int i = 0; i < 10; i++) { 
+      g.pTable.periodicTableBoxes[i] = false;
+    }
+    g.pTable.colorOscillator = 0;
+    g.pTable.showPeriodicTable = false;
+    g.displayInstructions = true;
+    g.buttonsClicked = 0;
+  }
+}
