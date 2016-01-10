@@ -1,0 +1,60 @@
+class Grid {
+
+  //introduce variables that are initialized in Grid constructor
+  int horizontalPartitions; //number of partitions into horizontal cells
+  int verticalPartitions; //number of partitions into vertical cells
+  float gridPartitionSizeX; //horizontal space between vertical partitions
+  float gridPartitionSizeY;  //vertical space between horizontal partitions
+  Cell[][] cells = new Cell[8][8]; //general arbitrary cells
+  boolean makeGlow = false;
+  Bond[][] bondsh = new Bond[8][8]; //establish horizontal bonds
+  Bond[][] bondsv = new Bond[8][8]; //establish vertical bonds
+
+  //this constructor initializes the variables comprising the Grid object.
+  Grid(Cell[][] tempCells, int tempHorizontalPartitions, int tempVerticalPartitions, float tempGridPartitionSizeX, float tempGridPartitionSizeY) {
+    cells = tempCells;
+    horizontalPartitions = tempCells[0].length - 1; //gives the vertical length of the array minus 1
+    verticalPartitions = tempCells.length - 1; //gives the horizontal length of the array minus 1
+    horizontalPartitions = tempHorizontalPartitions;
+    verticalPartitions = tempVerticalPartitions;
+    gridPartitionSizeX = tempGridPartitionSizeX;
+    gridPartitionSizeY = tempGridPartitionSizeY;
+  }
+
+  /** checks to see if grid is empty or not.
+   *
+   */
+  boolean emptyGrid() {
+    int eGrid = 0;
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {
+        if (g.grid.cells[i][j].isOccupied == true) {
+          eGrid = eGrid + 1;
+        }
+      }
+    }
+    if (eGrid > 0) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  /** checkToGlow checks as to whether an individual cell should glow
+   *
+   */
+  void checkToGlow() {
+    for (int i = 0; i < 8; i++) {
+      for (int j = 0; j < 8; j++) {  
+        if (g.grid.cells[i][j].occupiedWithWhat == -1) {
+          g.grid.cells[i][j].isHighlighted = true;
+          g.grid.cells[i][j].cellGlow(); //code in this method moved to cell for cleanliness and organization
+          g.grid.cells[i][j].cellColor = g.cells[i][j].highlightCellColor;
+        } else if (cells[i][j].occupiedWithWhat >= 0) {
+          g.grid.cells[i][j].isHighlighted = false;
+          g.grid.cells[i][j].cellColor = g.backgroundColor;
+        }
+      }
+    }
+  }
+}
